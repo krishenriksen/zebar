@@ -11,15 +11,12 @@ use tracing::info;
 
 #[cfg(windows)]
 use super::{
-  window::WindowProvider, audio::AudioProvider, keyboard::KeyboardProvider,
-  komorebi::KomorebiProvider, media::MediaProvider,
-  systray::SystrayProvider,
+  audio::AudioProvider, media::MediaProvider, systray::SystrayProvider, window::WindowProvider,
 };
 use super::{
   battery::BatteryProvider, cpu::CpuProvider, disk::DiskProvider,
-  host::HostProvider, ip::IpProvider, memory::MemoryProvider,
-  network::NetworkProvider, weather::WeatherProvider, Provider,
-  ProviderConfig, ProviderFunction, ProviderFunctionResponse,
+  host::HostProvider, memory::MemoryProvider,
+  network::NetworkProvider, Provider, ProviderConfig, ProviderFunction, ProviderFunctionResponse,
   ProviderFunctionResult, ProviderOutput, RuntimeType,
 };
 
@@ -246,11 +243,7 @@ impl ProviderManager {
     common: CommonProviderState,
   ) -> anyhow::Result<(task::JoinHandle<()>, RuntimeType)> {
     let runtime_type = match config {
-      ProviderConfig::Ip(..) | ProviderConfig::Weather(..) => {
-        RuntimeType::Async
-      }
-      #[cfg(windows)]
-      ProviderConfig::Systray(..) | ProviderConfig::Komorebi(..) => {
+      ProviderConfig::Systray(..) => {
         RuntimeType::Async
       }
       _ => RuntimeType::Sync,
@@ -260,22 +253,8 @@ impl ProviderManager {
     let task_handle = match &runtime_type {
       RuntimeType::Async => task::spawn(async move {
         match config {
-          ProviderConfig::Ip(config) => {
-            let mut provider = IpProvider::new(config, common);
-            provider.start_async().await;
-          }
-          ProviderConfig::Weather(config) => {
-            let mut provider = WeatherProvider::new(config, common);
-            provider.start_async().await;
-          }
-          #[cfg(windows)]
           ProviderConfig::Systray(config) => {
             let mut provider = SystrayProvider::new(config, common);
-            provider.start_async().await;
-          }
-          #[cfg(windows)]
-          ProviderConfig::Komorebi(config) => {
-            let mut provider = KomorebiProvider::new(config, common);
             provider.start_async().await;
           }
           _ => unreachable!(),
@@ -289,7 +268,7 @@ impl ProviderManager {
           ProviderConfig::Window(config) => {
             let mut provider = WindowProvider::new(config, common);
             provider.start_sync();
-          }          
+          }
           ProviderConfig::Audio(config) => {
             let mut provider = AudioProvider::new(config, common);
             provider.start_sync();
@@ -321,11 +300,6 @@ impl ProviderManager {
           }
           ProviderConfig::Network(config) => {
             let mut provider = NetworkProvider::new(config, common);
-            provider.start_sync();
-          }
-          #[cfg(windows)]
-          ProviderConfig::Keyboard(config) => {
-            let mut provider = KeyboardProvider::new(config, common);
             provider.start_sync();
           }
           _ => unreachable!(),

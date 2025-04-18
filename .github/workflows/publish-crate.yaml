@@ -9,7 +9,6 @@ on:
         options:
           - systray-util
           - shell-util
-          - komorebi-util
       crate-version:
         type: string
         description: The version of the crate to publish.

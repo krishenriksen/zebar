@@ -5,7 +5,7 @@
     "frontendDist": "../settings-ui/dist"
   },
   "productName": "Zebar",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "identifier": "com.glzr.zebar",
   "bundle": {
     "active": true,
@@ -20,9 +20,9 @@
     "category": "Utility",
     "publisher": "Glzr Software Pte. Ltd.",
     "resources": ["resources/*", "../../examples/**/*"],
-    "targets": ["deb", "appimage", "msi", "dmg"],
+    "targets": ["msi"],
     "windows": {
-      "signCommand": "powershell -ExecutionPolicy Bypass -File ./resources/scripts/sign.ps1 -FilePath %1",
+      "signCommand": "echo 'powershell -ExecutionPolicy Bypass -File ./resources/scripts/sign.ps1 -FilePath %1'",
       "wix": {
         "template": "./installer.wxs"
       }
@@ -32,7 +32,6 @@
     }
   },
   "app": {
-    "macOSPrivateApi": true,
     "security": {
       "csp": {
         "default-src": "'self'",

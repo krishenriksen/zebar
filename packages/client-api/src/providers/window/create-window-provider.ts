@@ -13,7 +13,9 @@ const windowProviderConfigSchema = z.object({
   refreshInterval: z.coerce.number().default(1000),
 });
 
-export function createWindowProvider(config: WindowProviderConfig): WindowProvider {
+export function createWindowProvider(
+  config: WindowProviderConfig,
+): WindowProvider {
   const mergedConfig = windowProviderConfigSchema.parse(config);
 
   return createBaseProvider(mergedConfig, async queue => {

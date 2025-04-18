@@ -2,15 +2,15 @@ use serde::Deserialize;
 
 #[cfg(windows)]
 use super::{
-  audio::AudioProviderConfig, keyboard::KeyboardProviderConfig,
-  komorebi::KomorebiProviderConfig, media::MediaProviderConfig,
+  audio::AudioProviderConfig,
+  media::MediaProviderConfig,
   systray::SystrayProviderConfig,
 };
 use super::{
-  window::WindowProviderConfig, battery::BatteryProviderConfig, cpu::CpuProviderConfig,
+  battery::BatteryProviderConfig, cpu::CpuProviderConfig,
   disk::DiskProviderConfig, host::HostProviderConfig,
-  ip::IpProviderConfig, memory::MemoryProviderConfig,
-  network::NetworkProviderConfig, weather::WeatherProviderConfig,
+  memory::MemoryProviderConfig,
+  network::NetworkProviderConfig, window::WindowProviderConfig,
 };
 
 #[derive(Deserialize, Debug)]
@@ -22,17 +22,9 @@ pub enum ProviderConfig {
   Battery(BatteryProviderConfig),
   Cpu(CpuProviderConfig),
   Host(HostProviderConfig),
-  Ip(IpProviderConfig),
-  #[cfg(windows)]
-  Komorebi(KomorebiProviderConfig),
-  #[cfg(windows)]
   Media(MediaProviderConfig),
   Memory(MemoryProviderConfig),
   Disk(DiskProviderConfig),
   Network(NetworkProviderConfig),
-  #[cfg(windows)]
   Systray(SystrayProviderConfig),
-  Weather(WeatherProviderConfig),
-  #[cfg(windows)]
-  Keyboard(KeyboardProviderConfig),
 }

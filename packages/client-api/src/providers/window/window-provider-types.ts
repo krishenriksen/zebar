@@ -6,7 +6,7 @@ export interface WindowProviderConfig {
   /**
    * How often this provider refreshes in milliseconds.
    */
-  refreshInterval?: number;  
+  refreshInterval?: number;
 }
 
 export type WindowProvider = Provider<WindowProviderConfig, WindowOutput>;

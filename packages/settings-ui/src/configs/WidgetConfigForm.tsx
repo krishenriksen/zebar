@@ -482,10 +482,10 @@ export function WidgetConfigForm(props: WidgetConfigFormProps) {
                               inputProps().onChange(
                                 enabled
                                   ? null
-                                  : anchorToEdges(
+                                  : (anchorToEdges(
                                       configForm.value.presets[index]
                                         .anchor,
-                                    )[0] ?? null,
+                                    )[0] ?? null),
                               )
                             }
                             value={inputProps().value === null}

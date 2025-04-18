@@ -2,13 +2,18 @@ use serde::Serialize;
 
 #[cfg(windows)]
 use super::{
-  window::WindowOutput, audio::AudioOutput, keyboard::KeyboardOutput, komorebi::KomorebiOutput,
-  media::MediaOutput, systray::SystrayOutput,
+  audio::AudioOutput,
+  media::MediaOutput,
+  systray::SystrayOutput,
+  window::WindowOutput,
 };
 use super::{
-  battery::BatteryOutput, cpu::CpuOutput, disk::DiskOutput,
-  host::HostOutput, ip::IpOutput, memory::MemoryOutput,
-  network::NetworkOutput, weather::WeatherOutput,
+  battery::BatteryOutput,
+  cpu::CpuOutput,
+  disk::DiskOutput,
+  host::HostOutput,
+  memory::MemoryOutput,
+  network::NetworkOutput,
 };
 
 /// Implements `From<T>` for `ProviderOutput` for each given variant.
@@ -33,38 +38,26 @@ pub enum ProviderOutput {
   Battery(BatteryOutput),
   Cpu(CpuOutput),
   Host(HostOutput),
-  Ip(IpOutput),
-  #[cfg(windows)]
-  Komorebi(KomorebiOutput),
-  #[cfg(windows)]
   Media(MediaOutput),
   Memory(MemoryOutput),
   Disk(DiskOutput),
   Network(NetworkOutput),
-  #[cfg(windows)]
   Systray(SystrayOutput),
-  Weather(WeatherOutput),
-  #[cfg(windows)]
-  Keyboard(KeyboardOutput),
 }
 
 impl_provider_output! {
   Battery(BatteryOutput),
   Cpu(CpuOutput),
   Host(HostOutput),
-  Ip(IpOutput),
   Memory(MemoryOutput),
   Disk(DiskOutput),
   Network(NetworkOutput),
-  Weather(WeatherOutput)
 }
 
 #[cfg(windows)]
 impl_provider_output! {
   Window(WindowOutput),
   Audio(AudioOutput),
-  Komorebi(KomorebiOutput),
   Media(MediaOutput),
-  Keyboard(KeyboardOutput),
   Systray(SystrayOutput),
 }

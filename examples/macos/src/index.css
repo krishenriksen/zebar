@@ -2,7 +2,7 @@
  * Import the Nerdfonts icon font.
  * Ref https://www.nerdfonts.com/cheat-sheet for a cheatsheet of available Nerdfonts icons.
  */
- @import 'https://www.nerdfonts.com/assets/css/webfont.css';
+@import 'https://www.nerdfonts.com/assets/css/webfont.css';
 
 html,
 body {
@@ -10,7 +10,7 @@ body {
   margin: 0;
   padding: 0;
   color: rgb(0 0 0 / 90%);
-  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
   overflow: hidden;
@@ -66,7 +66,7 @@ ul {
   padding: 0;
   list-style: none;
   flex-direction: row;
-  align-items: center;  
+  align-items: center;
   justify-content: flex-start;
   display: flex;
 }
@@ -105,7 +105,9 @@ button {
   border: 0;
   background: none;
   text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
-  transition: background-color 0.2s, border-color 0.2s; /* Smooth hover effect */
+  transition:
+    background-color 0.2s,
+    border-color 0.2s; /* Smooth hover effect */
 }
 
 button:hover {

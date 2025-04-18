@@ -7,8 +7,8 @@ import { createSignal, createEffect, createMemo } from 'solid-js';
 
 const providers = createProviderGroup({
   window: { type: 'window', refreshInterval: 1500 },
-  cpu: { type: 'cpu', refreshInterval: 5000  },
-  memory: { type: 'memory', refreshInterval: 5000  },
+  cpu: { type: 'cpu', refreshInterval: 5000 },
+  memory: { type: 'memory', refreshInterval: 5000 },
   audio: { type: 'audio' },
   systray: { type: 'systray', refreshInterval: 5000 },
   date: { type: 'date', formatting: 'EEE d MMM t' },
@@ -41,50 +41,71 @@ function App() {
 
   const dropdownOptions = [
     { name: 'About This PC', action: () => performAction('ms-settings:') },
-    { name: 'System Preferences', action: () => performAction('ms-settings:system') },
-    { name: 'App Store', action: () => performAction('ms-windows-store:') }
+    {
+      name: 'System Preferences',
+      action: () => performAction('ms-settings:system'),
+    },
+    {
+      name: 'App Store',
+      action: () => performAction('ms-windows-store:'),
+    },
   ];
-  
+
   const countdownOptions = [
-    { name: 'Sleep', action: () => performAction('rundll32.exe', ['powrprof.dll,SetSuspendState', '0', '1', '0']) },
-    { name: 'Shut Down', action: () => performAction('shutdown', ['/s', '/t', '0']) },
-    { name: 'Restart', action: () => performAction('shutdown', ['/r', '/t', '0']) },
-    { name: 'Log Out', action: () => performAction('shutdown', ['/l']) }
+    {
+      name: 'Sleep',
+      action: () =>
+        performAction('rundll32.exe', [
+          'powrprof.dll,SetSuspendState',
+          '0',
+          '1',
+          '0',
+        ]),
+    },
+    {
+      name: 'Shut Down',
+      action: () => performAction('shutdown', ['/s', '/t', '0']),
+    },
+    {
+      name: 'Restart',
+      action: () => performAction('shutdown', ['/r', '/t', '0']),
+    },
+    { name: 'Log Out', action: () => performAction('shutdown', ['/l']) },
   ];
 
   createEffect(() => providers.onOutput(setOutput));
 
-  const renderIcon = (icon) => (
+  const renderIcon = icon => (
     <li key={icon.id}>
       <img
         class="systray-icon"
         src={icon.iconUrl}
         title={icon.tooltip}
-        onClick={(e) => output.systray.onLeftClick(icon.id)}
-        onContextMenu={(e) => output.systray.onRightClick(icon.id)}
+        onClick={e => output.systray.onLeftClick(icon.id)}
+        onContextMenu={e => output.systray.onRightClick(icon.id)}
       />
     </li>
   );
 
   const sortByPriority = (a, b) => {
-    const getPriority = (icon) => {
+    const getPriority = icon => {
       const tooltip = icon.tooltip?.toLowerCase() || '';
       if (tooltip.includes('cpu core')) return 1;
       if (tooltip.includes('gpu')) return 2;
       return 99; // everything else gets a lower priority
     };
-  
+
     return getPriority(a) - getPriority(b);
   };
 
-  const renderIcons = (icons) =>
+  const renderIcons = icons =>
     icons
-      .filter((icon) => !icon.tooltip?.toLowerCase().includes('speakers'))
+      .filter(icon => !icon.tooltip?.toLowerCase().includes('speakers'))
       .sort(sortByPriority)
       .map(renderIcon);
 
   const SystrayIcons = createMemo(() =>
-    output.systray ? renderIcons(output.systray.icons) : null
+    output.systray ? renderIcons(output.systray.icons) : null,
   );
 
   const startCountdown = (name, action) => {
@@ -95,10 +116,10 @@ function App() {
     }
 
     resetCountdown();
-    
+
     setCountdownActive(name);
     countdownInteval = setInterval(() => {
-      setCountdown((prev) => {
+      setCountdown(prev => {
         if (prev <= 1) {
           resetCountdown();
           action();
@@ -108,7 +129,7 @@ function App() {
       });
     }, 1000);
   };
-  
+
   const resetCountdown = () => {
     clearInterval(countdownInteval);
     countdownInteval = undefined;
@@ -129,14 +150,23 @@ function App() {
   return (
     <div class="app">
       <div class="left">
-        <i class="logo nf nf-fa-windows" onClick={() => toggleDropdown()}></i>
+        <i
+          class="logo nf nf-fa-windows"
+          onClick={() => toggleDropdown()}
+        ></i>
         <ul id="dropdown">
           {dropdownOptions.map(({ name, action }) => (
-            <li onClick={action}><button>{name}</button></li>
+            <li onClick={action}>
+              <button>{name}</button>
+            </li>
           ))}
           {countdownOptions.map(({ name, action }) => (
             <li class={countdownActive() == name && `act`}>
-              <button onClick={() => { startCountdown(name, action); }}>
+              <button
+                onClick={() => {
+                  startCountdown(name, action);
+                }}
+              >
                 {name} {countdownActive() == name && `(${countdown()}s)`}
               </button>
               {countdownActive() == name && (
@@ -148,11 +178,13 @@ function App() {
 
         <ul>
           <li>
-            <button onClick={() => {
-              if (output.window?.title === 'File Explorer') {
-                performAction('$HOME');
-              }
-            }}>
+            <button
+              onClick={() => {
+                if (output.window?.title === 'File Explorer') {
+                  performAction('$HOME');
+                }
+              }}
+            >
               {output.window?.title || 'File Explorer'}
             </button>
           </li>
@@ -186,7 +218,7 @@ function App() {
                 step="2"
                 value={output.audio.defaultPlaybackDevice.volume}
                 onChange={(e: Event & { target: HTMLInputElement }) =>
-                output.audio.setVolume(e.target.valueAsNumber)
+                  output.audio.setVolume(e.target.valueAsNumber)
                 }
               />
             </li>
