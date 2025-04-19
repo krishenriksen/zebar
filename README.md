@@ -11,13 +11,7 @@
 [![Discord invite][discord-badge]][discord-link]
 [![Good first issues][issues-badge]][issues-link]
 
-[Installation](#%EF%B8%8F-installation) •
-[Intro](#-intro-to-zebar) •
-[FAQ](#-faq) •
-[Contributing ↗](https://github.com/glzr-io/zebar/blob/main/CONTRIBUTING.md)
-
-![zebar-demo](https://github.com/user-attachments/assets/7a3aa5d2-2c7a-4171-9ede-d88839b91666)
-
+[![Low system resources macOS theme for Windows 11](https://i.ytimg.com/vi/DdTJlD7R1Wg/maxresdefault.jpg)](https://youtu.be/DdTJlD7R1Wg)
 </div>
 
 ## ⚙️ Installation
