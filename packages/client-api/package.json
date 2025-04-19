@@ -1,10 +1,11 @@
 {
   "name": "zebar",
   "version": "0.0.1",
+  "private": true,
   "description": "Client API for Zebar - a tool for creating customizable taskbars, desktop widgets, and popups.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/glzr-io/zebar.git"
+    "url": "git+https://github.com/krishenriksen/zebar.git"
   },
   "license": "GPL-3.0-only",
   "author": "Lars Berger",
@@ -29,16 +30,15 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@tauri-apps/api": "2.0.2",
-    "@tauri-apps/plugin-dialog": "2.0.0",
-    "luxon": "3.4.4",
-    "zod": "3.22.4"
+    "@tauri-apps/api": "2.5.0",
+    "@tauri-apps/plugin-dialog": "2.2.1",
+    "luxon": "3.6.1",
+    "zod": "3.24.3"
   },
   "devDependencies": {
-    "@types/luxon": "3.4.2",
-    "esbuild": "0.20.0",
-    "tsup": "8.0.2",
-    "typescript": "5.3.3"
-  },
-  "private": true
+    "@types/luxon": "3.6.2",
+    "esbuild": "0.25.2",
+    "tsup": "8.4.0",
+    "typescript": "5.8.3"
+  }
 }

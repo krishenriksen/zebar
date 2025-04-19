@@ -1,17 +1,16 @@
 {
-  "name": "solidjs-ts",
-  "version": "0.0.0",
+  "name": "macos",
+  "version": "0.0.1",
   "description": "",
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch"
   },
   "dependencies": {
-    "solid-js": "^1.9.5",
+    "solid-js": "1.9.5",
     "zebar": "0.0.1"
   },
   "devDependencies": {
-    "typescript": "5.3.3",
     "vite": "^6.3.2",
     "vite-plugin-solid": "^2.11.6"
   }

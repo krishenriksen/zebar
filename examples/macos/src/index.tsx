@@ -6,7 +6,7 @@ import { createProviderGroup, shellExec } from 'zebar';
 import { createSignal, createEffect, createMemo } from 'solid-js';
 
 const providers = createProviderGroup({
-  window: { type: 'window', refreshInterval: 1000 },
+  window: { type: 'window', refreshInterval: 1500 },
   audio: { type: 'audio' },
   systray: { type: 'systray', refreshInterval: 5000 },
   date: { type: 'date', formatting: 'EEE d MMM t' },

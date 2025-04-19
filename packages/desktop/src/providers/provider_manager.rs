@@ -11,12 +11,13 @@ use tracing::info;
 
 #[cfg(windows)]
 use super::{
-  audio::AudioProvider, media::MediaProvider, systray::SystrayProvider, window::WindowProvider,
+  audio::AudioProvider, media::MediaProvider, systray::SystrayProvider,
+  window::WindowProvider,
 };
 use super::{
   battery::BatteryProvider, cpu::CpuProvider, disk::DiskProvider,
-  host::HostProvider, memory::MemoryProvider,
-  network::NetworkProvider, Provider, ProviderConfig, ProviderFunction, ProviderFunctionResponse,
+  host::HostProvider, memory::MemoryProvider, network::NetworkProvider,
+  Provider, ProviderConfig, ProviderFunction, ProviderFunctionResponse,
   ProviderFunctionResult, ProviderOutput, RuntimeType,
 };
 
@@ -243,9 +244,7 @@ impl ProviderManager {
     common: CommonProviderState,
   ) -> anyhow::Result<(task::JoinHandle<()>, RuntimeType)> {
     let runtime_type = match config {
-      ProviderConfig::Systray(..) => {
-        RuntimeType::Async
-      }
+      ProviderConfig::Systray(..) => RuntimeType::Async,
       _ => RuntimeType::Sync,
     };
 

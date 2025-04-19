@@ -2,15 +2,14 @@ use serde::Deserialize;
 
 #[cfg(windows)]
 use super::{
-  audio::AudioProviderConfig,
-  media::MediaProviderConfig,
+  audio::AudioProviderConfig, media::MediaProviderConfig,
   systray::SystrayProviderConfig,
 };
 use super::{
   battery::BatteryProviderConfig, cpu::CpuProviderConfig,
   disk::DiskProviderConfig, host::HostProviderConfig,
-  memory::MemoryProviderConfig,
-  network::NetworkProviderConfig, window::WindowProviderConfig,
+  memory::MemoryProviderConfig, network::NetworkProviderConfig,
+  window::WindowProviderConfig,
 };
 
 #[derive(Deserialize, Debug)]
