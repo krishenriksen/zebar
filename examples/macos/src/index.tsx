@@ -7,8 +7,6 @@ import { createSignal, createEffect, createMemo } from 'solid-js';
 
 const providers = createProviderGroup({
   window: { type: 'window', refreshInterval: 1500 },
-  cpu: { type: 'cpu', refreshInterval: 5000 },
-  memory: { type: 'memory', refreshInterval: 5000 },
   audio: { type: 'audio' },
   systray: { type: 'systray', refreshInterval: 5000 },
   date: { type: 'date', formatting: 'EEE d MMM t' },
@@ -193,22 +191,6 @@ function App() {
 
       <div class="right">
         <ul>
-          {output.cpu && (
-            <li>
-              <i class="nf nf-oct-cpu"></i>
-              <span class={output.cpu.usage > 85 ? 'high-usage' : ''}>
-                {Math.round(output.cpu.usage)}%
-              </span>
-            </li>
-          )}
-
-          {output.memory && (
-            <li>
-              <i class="nf nf-fae-chip"></i>
-              {Math.round(output.memory.usage)}%
-            </li>
-          )}
-
           {output.audio?.defaultPlaybackDevice && (
             <li>
               <input
