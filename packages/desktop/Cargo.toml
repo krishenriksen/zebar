@@ -44,9 +44,6 @@ systray-util = { path = "../../crates/systray-util" }
 windows-core = { workspace = true }
 windows = { workspace = true }
 
-[target.'cfg(target_os = "macos")'.dependencies]
-cocoa = "0.25"
-
 [features]
 # This feature is used for production builds or when `devPath` points to the
 # filesystem. Do not remove!

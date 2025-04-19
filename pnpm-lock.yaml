@@ -41,7 +41,7 @@ importers:
         version: 1.9.5
       zebar:
         specifier: ^2.0.0
-        version: link:../../packages/client-api
+        version: 2.7.0
     devDependencies:
       typescript:
         specifier: 5.3.3
@@ -61,9 +61,6 @@ importers:
       '@tauri-apps/plugin-dialog':
         specifier: 2.0.0
         version: 2.0.0
-      glazewm:
-        specifier: 1.7.0
-        version: 1.7.0
       luxon:
         specifier: 3.4.4
         version: 3.4.4
@@ -115,13 +112,13 @@ importers:
         version: 1.9.3
       zebar:
         specifier: ^2.0.0
-        version: link:../client-api
+        version: 2.7.0
     devDependencies:
       postcss:
         specifier: 8.4.47
         version: 8.4.47
       tailwindcss:
-        specifier: '3.4.13 '
+        specifier: 3.4.13
         version: 3.4.13
       tailwindcss-animate:
         specifier: 1.0.7
@@ -2513,6 +2510,9 @@ packages:
     resolution: {integrity: sha512-8aAvwVUSHpfEqTQ4w/KMlf3HcRdt50E5ODIQJBw1fQ5RL34xabzxtUlzTXVqc4rkZsPbvrXKWnABCD7kWSmocA==}
     engines: {node: '>= 14'}
 
+  zebar@2.7.0:
+    resolution: {integrity: sha512-Ev4SgnkWBXlL74XksoiOKGumwKqeT4UEL42MRyDyNOlwo4FZD0Eq6T5ghksBJJzWb0ULLNxKA2nNItrY9dM0ng==}
+
   zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
 
@@ -4613,5 +4613,15 @@ snapshots:
   yallist@3.1.1: {}
 
   yaml@2.3.4: {}
+
+  zebar@2.7.0:
+    dependencies:
+      '@tauri-apps/api': 2.0.2
+      '@tauri-apps/plugin-dialog': 2.0.0
+      glazewm: 1.7.0
+      luxon: 3.4.4
+      zod: 3.22.4
+    transitivePeerDependencies:
+      - ws
 
   zod@3.22.4: {}
