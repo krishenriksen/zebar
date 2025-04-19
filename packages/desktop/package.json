@@ -2,7 +2,7 @@
   "name": "@zebar/desktop",
   "version": "0.0.1",
   "scripts": {
-    "build": "npm run tauri build -- --verbose --target x86_64-pc-windows-gnu",
+    "build": "npm run tauri build -- --verbose",
     "dev": "npm run tauri dev -- -- -- startup --config-dir=../../examples",
     "dev:local": "npm run tauri dev -- -- -- startup",
     "format": "cargo fmt",

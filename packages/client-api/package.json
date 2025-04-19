@@ -1,8 +1,11 @@
 {
   "name": "zebar",
-  "version": "2.0.0",
+  "version": "0.0.1",
   "description": "Client API for Zebar - a tool for creating customizable taskbars, desktop widgets, and popups.",
-  "repository": "github:glzr-io/zebar",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glzr-io/zebar.git"
+  },
   "license": "GPL-3.0-only",
   "author": "Lars Berger",
   "sideEffects": false,
@@ -36,5 +39,6 @@
     "esbuild": "0.20.0",
     "tsup": "8.0.2",
     "typescript": "5.3.3"
-  }
+  },
+  "private": true
 }
