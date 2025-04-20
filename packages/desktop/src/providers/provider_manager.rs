@@ -15,8 +15,8 @@ use super::{
   window::WindowProvider,
 };
 use super::{
-  battery::BatteryProvider, cpu::CpuProvider, disk::DiskProvider,
-  host::HostProvider, memory::MemoryProvider, network::NetworkProvider,
+  battery::BatteryProvider, cpu::CpuProvider,
+  memory::MemoryProvider, network::NetworkProvider,
   Provider, ProviderConfig, ProviderFunction, ProviderFunctionResponse,
   ProviderFunctionResult, ProviderOutput, RuntimeType,
 };
@@ -280,10 +280,6 @@ impl ProviderManager {
             let mut provider = CpuProvider::new(config, common);
             provider.start_sync();
           }
-          ProviderConfig::Host(config) => {
-            let mut provider = HostProvider::new(config, common);
-            provider.start_sync();
-          }
           #[cfg(windows)]
           ProviderConfig::Media(config) => {
             let mut provider = MediaProvider::new(config, common);
@@ -291,10 +287,6 @@ impl ProviderManager {
           }
           ProviderConfig::Memory(config) => {
             let mut provider = MemoryProvider::new(config, common);
-            provider.start_sync();
-          }
-          ProviderConfig::Disk(config) => {
-            let mut provider = DiskProvider::new(config, common);
             provider.start_sync();
           }
           ProviderConfig::Network(config) => {

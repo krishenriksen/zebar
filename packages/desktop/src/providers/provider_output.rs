@@ -6,8 +6,8 @@ use super::{
   window::WindowOutput,
 };
 use super::{
-  battery::BatteryOutput, cpu::CpuOutput, disk::DiskOutput,
-  host::HostOutput, memory::MemoryOutput, network::NetworkOutput,
+  battery::BatteryOutput, cpu::CpuOutput,
+  memory::MemoryOutput, network::NetworkOutput,
 };
 
 /// Implements `From<T>` for `ProviderOutput` for each given variant.
@@ -31,10 +31,8 @@ pub enum ProviderOutput {
   Audio(AudioOutput),
   Battery(BatteryOutput),
   Cpu(CpuOutput),
-  Host(HostOutput),
   Media(MediaOutput),
   Memory(MemoryOutput),
-  Disk(DiskOutput),
   Network(NetworkOutput),
   Systray(SystrayOutput),
 }
@@ -42,9 +40,7 @@ pub enum ProviderOutput {
 impl_provider_output! {
   Battery(BatteryOutput),
   Cpu(CpuOutput),
-  Host(HostOutput),
   Memory(MemoryOutput),
-  Disk(DiskOutput),
   Network(NetworkOutput),
 }
 

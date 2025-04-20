@@ -1,8 +1,6 @@
 mod audio;
 mod battery;
 mod cpu;
-mod disk;
-mod host;
 #[cfg(windows)]
 mod media;
 mod memory;

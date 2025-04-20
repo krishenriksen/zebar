@@ -28,12 +28,6 @@ import type {
   DateProvider,
 } from './date/date-provider-types';
 
-import { createHostProvider } from './host/create-host-provider';
-import type {
-  HostProviderConfig,
-  HostProvider,
-} from './host/host-provider-types';
-
 import type {
   MediaProviderConfig,
   MediaProvider,
@@ -52,12 +46,6 @@ import type {
   NetworkProvider,
 } from './network/network-provider-types';
 
-import { createDiskProvider } from './disk/create-disk-provider';
-import type {
-  DiskProvider,
-  DiskProviderConfig,
-} from './disk/disk-provider-types';
-
 import { createSystrayProvider } from './systray/create-systray-provider';
 import type {
   SystrayProviderConfig,
@@ -70,11 +58,9 @@ export interface ProviderConfigMap {
   battery: BatteryProviderConfig;
   cpu: CpuProviderConfig;
   date: DateProviderConfig;
-  host: HostProviderConfig;
   media: MediaProviderConfig;
   memory: MemoryProviderConfig;
   network: NetworkProviderConfig;
-  disk: DiskProviderConfig;
   systray: SystrayProviderConfig;
 }
 
@@ -84,11 +70,9 @@ export interface ProviderMap {
   battery: BatteryProvider;
   cpu: CpuProvider;
   date: DateProvider;
-  host: HostProvider;
   media: MediaProvider;
   memory: MemoryProvider;
   network: NetworkProvider;
-  disk: DiskProvider;
   systray: SystrayProvider;
 }
 
@@ -123,16 +107,12 @@ export function createProvider<T extends ProviderConfig>(
       return createCpuProvider(config) as any;
     case 'date':
       return createDateProvider(config) as any;
-    case 'host':
-      return createHostProvider(config) as any;
     case 'media':
       return createMediaProvider(config) as any;
     case 'memory':
       return createMemoryProvider(config) as any;
     case 'network':
       return createNetworkProvider(config) as any;
-    case 'disk':
-      return createDiskProvider(config) as any;
     case 'systray':
       return createSystrayProvider(config) as any;
     default:

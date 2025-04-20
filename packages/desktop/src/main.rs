@@ -225,30 +225,43 @@ fn listen_events(
 
   task::spawn(async move {
     loop {
-      let res = tokio::select! {
+      let res: Result<(), anyhow::Error> = tokio::select! {
         Ok(widget_state) = widget_open_rx.recv() => {
           info!("Widget opened.");
-          let _ = tray.refresh().await;
+          if let Err(e) = tray.refresh().await {
+            error!("Error refreshing tray: {:?}", e);
+          }
           let _ = app_handle.emit("widget-opened", widget_state);
           Ok(())
         },
         Ok(widget_id) = widget_close_rx.recv() => {
           info!("Widget closed.");
-          let _ = tray.refresh().await;
+          if let Err(e) = tray.refresh().await {
+            error!("Error refreshing tray: {:?}", e);
+          }
           let _ = app_handle.emit("widget-closed", widget_id);
           Ok(())
         },
         Ok(_) = settings_change_rx.recv() => {
           info!("Settings changed.");
-          tray.refresh().await
+          if let Err(e) = tray.refresh().await {
+            error!("Error refreshing tray: {:?}", e);
+          }
+          Ok(())
         },
         Ok(_) = monitors_change_rx.recv() => {
           info!("Monitors changed.");
-          widget_factory.relaunch_all().await
+          if let Err(e) = widget_factory.relaunch_all().await {
+            error!("Error relaunching widgets: {:?}", e);
+          }
+          Ok(())
         },
         Ok(changed_configs) = widget_configs_change_rx.recv() => {
           info!("Widget configs changed.");
-          widget_factory.relaunch_by_paths(&changed_configs.keys().cloned().collect()).await
+          if let Err(e) = widget_factory.relaunch_by_paths(&changed_configs.keys().cloned().collect()).await {
+            error!("Error reconfiguring widgets: {:?}", e);
+          }
+          Ok(())
         },
         Some(provider_emission) = emit_rx.recv() => {
           info!("Provider emission: {:?}", provider_emission);

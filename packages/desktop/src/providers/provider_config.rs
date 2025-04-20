@@ -7,7 +7,6 @@ use super::{
 };
 use super::{
   battery::BatteryProviderConfig, cpu::CpuProviderConfig,
-  disk::DiskProviderConfig, host::HostProviderConfig,
   memory::MemoryProviderConfig, network::NetworkProviderConfig,
   window::WindowProviderConfig,
 };
@@ -20,10 +19,8 @@ pub enum ProviderConfig {
   Audio(AudioProviderConfig),
   Battery(BatteryProviderConfig),
   Cpu(CpuProviderConfig),
-  Host(HostProviderConfig),
   Media(MediaProviderConfig),
   Memory(MemoryProviderConfig),
-  Disk(DiskProviderConfig),
   Network(NetworkProviderConfig),
   Systray(SystrayProviderConfig),
 }
