@@ -38,10 +38,6 @@ i {
   background-color: #e0e0e0;
 }
 
-#dropdown {
-  display: none;
-}
-
 #root {
   height: 100%;
 }
@@ -73,22 +69,13 @@ ul {
 
 li {
   height: 100%;
-  margin-right: 20px;
   align-items: center;
   display: inline-flex;
 }
 
-.left li {
-  margin-right: 5px;
-}
-
-ul:not(#dropdown):not(#menu) > li:first-child button {
+ul > li:last-child button {
   font-weight: bold;
   text-shadow: none;
-}
-
-ul li ul li:last-child {
-  margin-right: 0;
 }
 
 li.act button:first-of-type {
@@ -97,7 +84,15 @@ li.act button:first-of-type {
   border-radius: 4px;
 }
 
-button {
+.right ul > li:last-child button {
+  margin-right: 10px;
+  font-weight: normal;
+  text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
+}
+
+button,
+input,
+.systray-icon {
   height: 100%;
   margin: 0;
   padding-left: 10px;
@@ -107,18 +102,18 @@ button {
   text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
   transition:
     background-color 0.2s,
-    border-color 0.2s; /* Smooth hover effect */
+    border-color 0.2s;
 }
 
-button:hover {
+button:hover,
+.systray-icon:hover {
   background-color: #d6d6d6;
   color: rgb(0 0 0 / 90%);
   border-radius: 4px;
 }
 
-.systray-icon {
+.systray-icon img {
   width: 20px;
-  height: 20px;  
-  will-change: transform;
-  transition: transform 0.3s ease;
+  height: 20px;
+  object-fit: contain;
 }

@@ -93,19 +93,21 @@ function App() {
   const renderIcon = (icon: SystrayIcon): HTMLElement => {
     if (!iconCache.has(icon.id)) {
       const li = (
-        <li id={icon.id}>
+        <li
+          id={icon.id}
+          class="systray-icon"
+          onClick={(e) => {
+            e.preventDefault();
+            output.systray?.onLeftClick(icon.id);
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            output.systray?.onRightClick(icon.id);
+          }}          
+        >
           <img
-            class="systray-icon"
             src={icon.iconUrl}
             title={icon.tooltip}
-            onClick={(e) => {
-              e.preventDefault();
-              output.systray?.onLeftClick(icon.id);
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              output.systray?.onRightClick(icon.id);
-            }}
           />
         </li>
       ) as unknown as HTMLElement;
@@ -187,15 +189,25 @@ function App() {
             setDropdownVisible(!isDropdownVisible());
           }}
         ></i>
-        <ul id="dropdown" style={{ display: isDropdownVisible() ? 'block' : 'none' }}>
+
+        <ul>
           {dropdownOptions.map(({ name, action }) => (
-            <li onClick={action}>
-              <button>{name}</button>
+            <li
+              style={{ display: isDropdownVisible() ? 'block' : 'none' }}
+            >
+              <button
+                onClick={action}
+              >
+                {name}
+              </button>
             </li>
           ))}
 
           {countdownOptions.map(({ name, action }) => (
-            <li class={countdownActive() === name ? 'act' : ''}>
+            <li
+              class={countdownActive() === name ? 'act' : ''}
+              style={{ display: isDropdownVisible() ? 'block' : 'none' }}
+            >
               <button
                 onClick={() => {
                   startCountdown(name, action);
@@ -208,9 +220,6 @@ function App() {
               )}
             </li>
           ))}
-        </ul>
-
-        <ul>
           <li>
             <button
               onClick={() => {
@@ -246,7 +255,13 @@ function App() {
 
           {output.date && (
             <li title={output.fullDate?.formatted}>
-              {output.date?.formatted}
+              <button
+                onClick={() => {
+                  performAction('powershell', ['/c', 'start', 'ms-actioncenter:'])
+                }}
+              >
+                {output.date?.formatted}
+              </button>
             </li>
           )}
         </ul>
