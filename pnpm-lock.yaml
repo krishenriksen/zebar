@@ -21,6 +21,9 @@ importers:
         specifier: 1.9.5
         version: 1.9.5
     devDependencies:
+      '@tauri-apps/cli':
+        specifier: 2.5.0
+        version: 2.5.0
       vite:
         specifier: ^6.3.2
         version: 6.3.2(@types/node@20.11.17)(jiti@2.4.2)(lightningcss@1.29.2)(sass@1.70.0)

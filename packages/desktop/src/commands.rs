@@ -151,6 +151,11 @@ pub fn set_skip_taskbar(
 }
 
 #[tauri::command]
+pub fn set_foreground_window(hwnd: isize) -> anyhow::Result<(), String> {
+    crate::providers::window::WindowProvider::set_foreground_window(hwnd)
+}
+
+#[tauri::command]
 pub async fn shell_exec(
   program: String,
   args: ShellCommandArgs,

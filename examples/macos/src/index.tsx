@@ -2,11 +2,18 @@
 import './index.css';
 import { render } from 'solid-js/web';
 import { createStore } from 'solid-js/store';
-import { createProviderGroup, shellExec } from 'zebar';
-import { createSignal, createEffect, createMemo, Accessor, JSX } from 'solid-js';
+import { createProviderGroup, setForegroundWindow } from 'zebar';
+import { createSignal, createEffect, createMemo, JSX } from 'solid-js';
 
+import { performAction } from './actions';
+import { getUpdates } from './updates';
+import { countdownOptions } from './countdownOptions';
+
+/**
+ * 
+ */
 type ProviderOutput = {
-  window?: { title: string };
+  window?: { title: string, hwnd: string };
   audio?: {
     defaultPlaybackDevice?: { volume: number };
     setVolume: (volume: number) => void;
@@ -26,68 +33,82 @@ type SystrayIcon = {
   tooltip: string;
 };
 
-type DropdownOption = {
+export type DropdownOption = {
   name: string;
   action: () => void;
 };
 
 const providers = createProviderGroup({
-  window: { type: 'window', refreshInterval: 1500 },
+  window: { type: 'window', refreshInterval: 1000 },
   audio: { type: 'audio' },
   systray: { type: 'systray', refreshInterval: 5000 },
   date: { type: 'date', formatting: 'EEE d MMM t' },
   fullDate: { type: 'date', formatting: 'EEEE, MMMM d, yyyy' },
 });
 
+export const [output, setOutput] = createStore<ProviderOutput>(
+  providers.outputMap,
+);
+
 function App() {
-  const [output, setOutput] = createStore<ProviderOutput>(providers.outputMap);
-  const [isDropdownVisible, setDropdownVisible] = createSignal<boolean>(false);
+  const [isDropdownVisible, setDropdownVisible] =
+    createSignal<boolean>(false);
   const [countdown, setCountdown] = createSignal<number>(60);
   const [countdownActive, setCountdownActive] = createSignal<string>('');
   let countdownInteval: number | undefined;
 
-  const performAction = async (command: string, params: string[] = []): Promise<void> => {
-    try {
-      await shellExec(command, params);
-    } catch (err) {
-      console.error('Error in executing command:', err);
-    }
-  };
+  /**
+   * Fetches the number of updates available on the system.
+   */
+  const [updates, setUpdates] = createSignal<string>('');
 
-  const dropdownOptions: DropdownOption[] = [
-    { name: 'About This PC',
-      action: () => performAction('powershell', ['/c', 'start', 'ms-settings:'])
-    },
-    {
-      name: 'System Preferences',
-      action: () => performAction('powershell', ['/c', 'start', 'ms-settings:system'])
-    },
-    {
-      name: 'App Store',
-      action: () => performAction('powershell', ['/c', 'start', 'ms-windows-store:'])
-    }
-  ];
+  createEffect(() => {
+    getUpdates().then(setUpdates);
 
-  const countdownOptions: DropdownOption[] = [
+    const interval = setInterval(
+      () => {
+        getUpdates().then(setUpdates);
+      },
+      2 * 60 * 60 * 1000,
+    ); // 2 hours in milliseconds
+
+    return () => clearInterval(interval);
+  });
+
+  /**
+   * Performs an action based on the provided command.
+   */
+  const dropdownOptions = createMemo(() => [
     {
-      name: 'Sleep',
-      action: () => performAction('rundll32.exe', ['powrprof.dll,SetSuspendState', '0', '1', '0'])
+      name: 'About This PC',
+      action: () => performAction('start ms-settings:'),
     },
     {
-      name: 'Shut Down',
-      action: () => performAction('shutdown', ['/s', '/t', '0'])
+      name: 'System Preferences...',
+      action: () => performAction('start ms-settings:system'),
     },
+    ...(updates() && updates() !== 'Error'
+      ? [
+          {
+            name: () => {
+              const count = updates();
+              return count === '1' ? '1 update' : `${count} updates`;
+            },
+            action: () => performAction('start ms-settings:windowsupdate'),
+          },
+        ]
+      : []),
     {
-      name: 'Restart',
-      action: () => performAction('shutdown', ['/r', '/t', '0'])
+      name: 'App Store...',
+      action: () => performAction('start ms-windows-store:'),
     },
-    {
-      name: 'Log Out', action: () => performAction('shutdown', ['/l'])
-    }
-  ];
+  ]);
 
   createEffect(() => providers.onOutput(setOutput));
 
+  /**
+   * Renders the icons in the system tray.
+   */
   const iconCache = new Map<string, HTMLElement>();
 
   const renderIcon = (icon: SystrayIcon): HTMLElement => {
@@ -96,19 +117,16 @@ function App() {
         <li
           id={icon.id}
           class="systray-icon"
-          onClick={(e) => {
+          onClick={e => {
             e.preventDefault();
             output.systray?.onLeftClick(icon.id);
           }}
-          onContextMenu={(e) => {
+          onContextMenu={e => {
             e.preventDefault();
             output.systray?.onRightClick(icon.id);
-          }}          
+          }}
         >
-          <img
-            src={icon.iconUrl}
-            title={icon.tooltip}
-          />
+          <img src={icon.iconUrl} title={icon.tooltip} />
         </li>
       ) as unknown as HTMLElement;
       iconCache.set(icon.id, li);
@@ -123,7 +141,7 @@ function App() {
   };
 
   const updateCache = (icons: SystrayIcon[]): void => {
-    const currentIds = new Set(icons.map((icon) => icon.id));
+    const currentIds = new Set(icons.map(icon => icon.id));
     iconCache.forEach((_, id) => {
       if (!currentIds.has(id)) {
         iconCache.delete(id);
@@ -136,7 +154,7 @@ function App() {
       updateCache(output.systray.icons);
 
       return output.systray.icons
-        .filter((icon) => !icon.tooltip?.toLowerCase().includes('speakers'))
+        .filter(icon => !icon.tooltip?.toLowerCase().includes('speakers'))
         .sort((a, b) => {
           const getPriority = (icon: SystrayIcon): number => {
             const tooltip = icon.tooltip?.toLowerCase() || '';
@@ -147,7 +165,7 @@ function App() {
 
           return getPriority(a) - getPriority(b);
         })
-        .map((icon) => renderIcon(icon));
+        .map(icon => renderIcon(icon));
     }
 
     return null;
@@ -155,6 +173,7 @@ function App() {
 
   const startCountdown = (name: string, action: () => void): void => {
     if (countdownActive() === name) {
+      resetCountdown();
       action();
       return;
     }
@@ -163,8 +182,9 @@ function App() {
 
     setCountdownActive(name);
     countdownInteval = setInterval(() => {
-      setCountdown((prev) => {
+      setCountdown(prev => {
         if (prev <= 1) {
+          resetCountdown();
           action();
         }
 
@@ -180,6 +200,33 @@ function App() {
     setCountdown(60);
   };
 
+  /**
+   * Get menu entries for specific applications
+   * Dynamically import the file based on the application title
+   */
+  const [appSpecificOptions, setAppSpecificOptions] = createSignal<DropdownOption[]>([]);
+  const importCache = new Map<string, DropdownOption[]>(); // Cache for imported modules
+
+  createEffect(async () => {
+    if (output.window?.title) {
+      const sanitizedTitle = output.window.title.replace(/\s+/g, '');
+
+      if (importCache.has(sanitizedTitle)) {
+        // Use cached module if available
+        setAppSpecificOptions(importCache.get(sanitizedTitle)!);
+      } else {
+        try {
+          const module = await import(`./applications/_${sanitizedTitle}.ts`);
+          const options = module.appMenuOptions || [];
+          importCache.set(sanitizedTitle, options); // Cache the imported module
+          setAppSpecificOptions(options);
+        } catch {
+          console.warn(`No configuration found for ${sanitizedTitle}`);
+        }
+      }
+    }
+  });
+
   return (
     <div class="app">
       <div class="left">
@@ -191,22 +238,36 @@ function App() {
         ></i>
 
         <ul>
-          {dropdownOptions.map(({ name, action }) => (
-            <li
-              style={{ display: isDropdownVisible() ? 'block' : 'none' }}
-            >
+          {dropdownOptions().map(({ name, action }) => (
+            <li class={isDropdownVisible() ? 'inline-flex' : 'none'}>
               <button
                 onClick={action}
+                class={
+                  typeof name === 'function' && name().includes('update')
+                    ? 'updates'
+                    : ''
+                }
               >
-                {name}
+                {typeof name === 'function' && name().includes('update')
+                  ? ''
+                  : typeof name === 'function'
+                    ? name()
+                    : name}
+                {typeof name === 'function' &&
+                  name().includes('update') && (
+                    <span class="badge">{name()}</span>
+                  )}
               </button>
             </li>
           ))}
 
           {countdownOptions.map(({ name, action }) => (
             <li
-              class={countdownActive() === name ? 'act' : ''}
-              style={{ display: isDropdownVisible() ? 'block' : 'none' }}
+              classList={{
+                act: countdownActive() === name,
+                'inline-flex': isDropdownVisible(),
+                none: !isDropdownVisible(),
+              }}
             >
               <button
                 onClick={() => {
@@ -220,17 +281,36 @@ function App() {
               )}
             </li>
           ))}
-          <li>
-            <button
-              onClick={() => {
-                if (output.window?.title === 'File Explorer') {
-                  performAction('$HOME');
-                }
-              }}
-            >
-              {output.window?.title || 'File Explorer'}
-            </button>
-          </li>
+
+          {!isDropdownVisible() && (
+            <li class="application">
+              <button
+                onClick={async () => {
+                  if (output.window?.title === 'File Explorer') {
+                    performAction('start $HOME');
+                  } else {
+                    const hwnd = output.window?.hwnd; // Assuming hwnd is available in output.window
+                    if (hwnd) {
+                      try {
+                        await setForegroundWindow(parseInt(hwnd));
+                      } catch (error) {
+                        console.error('Failed to set foreground window:', error);
+                      }
+                    }
+                  }
+                }}
+              >
+                {output.window?.title || 'File Explorer'}
+              </button>
+            </li>
+          )}
+
+          {!isDropdownVisible() && appSpecificOptions() &&
+            appSpecificOptions().map(({ name, action }) => (
+              <li>
+                <button onClick={action}>{name}</button>
+              </li>
+          ))}
         </ul>
       </div>
 
@@ -257,7 +337,7 @@ function App() {
             <li title={output.fullDate?.formatted}>
               <button
                 onClick={() => {
-                  performAction('powershell', ['/c', 'start', 'ms-actioncenter:'])
+                  performAction('start ms-actioncenter:');
                 }}
               >
                 {output.date?.formatted}

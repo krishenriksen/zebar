@@ -15,10 +15,10 @@ use super::{
   window::WindowProvider,
 };
 use super::{
-  battery::BatteryProvider, cpu::CpuProvider,
-  memory::MemoryProvider, network::NetworkProvider,
-  Provider, ProviderConfig, ProviderFunction, ProviderFunctionResponse,
-  ProviderFunctionResult, ProviderOutput, RuntimeType,
+  battery::BatteryProvider, cpu::CpuProvider, memory::MemoryProvider,
+  network::NetworkProvider, Provider, ProviderConfig, ProviderFunction,
+  ProviderFunctionResponse, ProviderFunctionResult, ProviderOutput,
+  RuntimeType,
 };
 
 /// Common fields for a provider.

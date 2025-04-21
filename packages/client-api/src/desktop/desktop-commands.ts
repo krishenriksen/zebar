@@ -17,6 +17,7 @@ export const desktopCommands = {
   callProviderFunction,
   setAlwaysOnTop,
   setSkipTaskbar,
+  setForegroundWindow,
   shellExec,
   shellSpawn,
   shellWrite,
@@ -106,6 +107,10 @@ function setAlwaysOnTop(): Promise<void> {
 
 function setSkipTaskbar(skip: boolean): Promise<void> {
   return invoke<void>('set_skip_taskbar', { skip });
+}
+
+function setForegroundWindow(hwnd: number): Promise<void> {
+  return invoke<void>('set_foreground_window', { hwnd });
 }
 
 function shellExec<TOutput extends string | Uint8Array = string>(

@@ -23,7 +23,6 @@ body {
 }
 
 i {
-  color: rgb(0 0 0 / 90%);
   margin-right: 5px;
 }
 
@@ -67,20 +66,24 @@ ul {
   display: flex;
 }
 
-li {
+ul li {
   height: 100%;
   align-items: center;
+  box-shadow: none;
   display: inline-flex;
 }
 
-ul > li:last-child button {
+ul li.none {
+  display: none;
+}
+
+ul > li.application button {
   font-weight: bold;
   text-shadow: none;
 }
 
-li.act button:first-of-type {
+ul li.act button:first-of-type {
   background-color: #d6d6d6;
-  color: rgb(0 0 0 / 90%);
   border-radius: 4px;
 }
 
@@ -100,20 +103,35 @@ input,
   border: 0;
   background: none;
   text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
 }
 
-button:hover,
+button:not(.updates):hover,
 .systray-icon:hover {
   background-color: #d6d6d6;
-  color: rgb(0 0 0 / 90%);
   border-radius: 4px;
+}
+
+li.inline-flex button:not(.updates):hover {
+  color: #ffffff;
+  background-color: #007aff;
+  text-shadow: 0 0.5px 1px rgba(255, 255, 255, 0.25);
 }
 
 .systray-icon img {
   width: 20px;
   height: 20px;
   object-fit: contain;
+}
+
+button.updates {
+  padding-left: 0;
+  padding-right: 5px;
+}
+
+button.updates span.badge {
+  background-color: #d6d6d6;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  text-shadow: none;
 }

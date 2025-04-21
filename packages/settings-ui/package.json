@@ -13,8 +13,7 @@
     "@tabler/icons-solidjs": "3.31.0",
     "@tauri-apps/api": "2.5.0",
     "smorf": "1.5.1",
-    "solid-js": "1.9.5",
-    "zebar": "0.0.1"
+    "solid-js": "1.9.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.4",
