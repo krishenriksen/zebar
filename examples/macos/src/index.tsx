@@ -73,38 +73,66 @@ function App() {
 
   createEffect(() => providers.onOutput(setOutput));
 
-  const renderIcon = icon => (
-    <li key={icon.id}>
-      <img
-        class="systray-icon"
-        src={icon.iconUrl}
-        title={icon.tooltip}
-        onClick={e => output.systray.onLeftClick(icon.id)}
-        onContextMenu={e => output.systray.onRightClick(icon.id)}
-      />
-    </li>
-  );
+  const iconCache = new Map();
 
-  const sortByPriority = (a, b) => {
-    const getPriority = icon => {
-      const tooltip = icon.tooltip?.toLowerCase() || '';
-      if (tooltip.includes('cpu core')) return 1;
-      if (tooltip.includes('gpu')) return 2;
-      return 99; // everything else gets a lower priority
-    };
-
-    return getPriority(a) - getPriority(b);
+  const renderIcon = icon => {
+    if (!iconCache.has(icon.id)) {
+      const li = (
+        <li id={icon.id}>
+          <img
+            class="systray-icon"
+            src={icon.iconUrl}
+            title={icon.tooltip}
+            onClick={e => {
+              e.preventDefault();
+              output.systray.onLeftClick(icon.id);
+            }}
+            onContextMenu={e => {
+              e.preventDefault();
+              output.systray.onRightClick(icon.id);
+            }}
+          />
+        </li>
+      );
+      iconCache.set(icon.id, li);
+    } else {
+      const cachedIcon = iconCache.get(icon.id);
+      const img = cachedIcon.querySelector('img');
+      if (img) {
+        img.src = icon.iconUrl;
+        img.title = icon.tooltip;
+      }
+    }
+    return iconCache.get(icon.id);
   };
 
-  const renderIcons = icons =>
-    icons
-      .filter(icon => !icon.tooltip?.toLowerCase().includes('speakers'))
-      .sort(sortByPriority)
-      .map(renderIcon);
+  const updateCache = icons => {
+    const currentIds = new Set(icons.map(icon => icon.id));
+    for (const id of iconCache.keys()) {
+      if (!currentIds.has(id)) {
+        iconCache.delete(id);
+      }
+    }
+  };
 
-  const SystrayIcons = createMemo(() =>
-    output.systray ? renderIcons(output.systray.icons) : null,
-  );
+  const SystrayIcons = createMemo(() => {
+    if (output.systray) {
+      updateCache(output.systray.icons);
+      return output.systray.icons
+        .filter(icon => !icon.tooltip?.toLowerCase().includes('speakers'))
+        .sort((a, b) => {
+          const getPriority = icon => {
+            const tooltip = icon.tooltip?.toLowerCase() || '';
+            if (tooltip.includes('cpu core')) return 1;
+            if (tooltip.includes('gpu')) return 2;
+            return 99; // everything else gets a lower priority
+          };
+          return getPriority(a) - getPriority(b);
+        })
+        .map(icon => renderIcon(icon));
+    }
+    return null;
+  });
 
   const startCountdown = (name, action) => {
     if (countdownActive() === name) {
