@@ -3,7 +3,33 @@ import './index.css';
 import { render } from 'solid-js/web';
 import { createStore } from 'solid-js/store';
 import { createProviderGroup, shellExec } from 'zebar';
-import { createSignal, createEffect, createMemo } from 'solid-js';
+import { createSignal, createEffect, createMemo, Accessor, JSX } from 'solid-js';
+
+type ProviderOutput = {
+  window?: { title: string };
+  audio?: {
+    defaultPlaybackDevice?: { volume: number };
+    setVolume: (volume: number) => void;
+  };
+  systray?: {
+    icons: SystrayIcon[];
+    onLeftClick: (id: string) => void;
+    onRightClick: (id: string) => void;
+  };
+  date?: { formatted: string };
+  fullDate?: { formatted: string };
+};
+
+type SystrayIcon = {
+  id: string;
+  iconUrl: string;
+  tooltip: string;
+};
+
+type DropdownOption = {
+  name: string;
+  action: () => void;
+};
 
 const providers = createProviderGroup({
   window: { type: 'window', refreshInterval: 1500 },
@@ -14,68 +40,57 @@ const providers = createProviderGroup({
 });
 
 function App() {
-  const [output, setOutput] = createStore(providers.outputMap);
-  const [countdown, setCountdown] = createSignal(60);
-  const [countdownActive, setCountdownActive] = createSignal(false);
+  const [output, setOutput] = createStore<ProviderOutput>(providers.outputMap);
+  const [isDropdownVisible, setDropdownVisible] = createSignal<boolean>(false);
+  const [countdown, setCountdown] = createSignal<number>(60);
+  const [countdownActive, setCountdownActive] = createSignal<string>('');
   let countdownInteval: number | undefined;
 
-  const performAction = async (command, params = []) => {
+  const performAction = async (command: string, params: string[] = []): Promise<void> => {
     try {
-      switch (command) {
-        case '$HOME':
-        case 'ms-settings:':
-        case 'ms-settings:system':
-        case 'ms-windows-store:':
-          await shellExec('powershell', ['/c', 'start', command]);
-          break;
-        default:
-          await shellExec(command, params);
-          break;
-      }
+      await shellExec(command, params);
     } catch (err) {
       console.error('Error in executing command:', err);
     }
   };
 
-  const dropdownOptions = [
-    { name: 'About This PC', action: () => performAction('ms-settings:') },
+  const dropdownOptions: DropdownOption[] = [
+    { name: 'About This PC',
+      action: () => performAction('powershell', ['/c', 'start', 'ms-settings:'])
+    },
     {
       name: 'System Preferences',
-      action: () => performAction('ms-settings:system'),
+      action: () => performAction('powershell', ['/c', 'start', 'ms-settings:system'])
     },
     {
       name: 'App Store',
-      action: () => performAction('ms-windows-store:'),
-    },
+      action: () => performAction('powershell', ['/c', 'start', 'ms-windows-store:'])
+    }
   ];
 
-  const countdownOptions = [
+  const countdownOptions: DropdownOption[] = [
     {
       name: 'Sleep',
-      action: () =>
-        performAction('rundll32.exe', [
-          'powrprof.dll,SetSuspendState',
-          '0',
-          '1',
-          '0',
-        ]),
+      action: () => performAction('rundll32.exe', ['powrprof.dll,SetSuspendState', '0', '1', '0'])
     },
     {
       name: 'Shut Down',
-      action: () => performAction('shutdown', ['/s', '/t', '0']),
+      action: () => performAction('shutdown', ['/s', '/t', '0'])
     },
     {
       name: 'Restart',
-      action: () => performAction('shutdown', ['/r', '/t', '0']),
+      action: () => performAction('shutdown', ['/r', '/t', '0'])
     },
-    { name: 'Log Out', action: () => performAction('shutdown', ['/l']) },
+    {
+      name: 'Log Out', action: () => performAction('shutdown', ['/l'])
+    }
   ];
 
   createEffect(() => providers.onOutput(setOutput));
 
-  const iconCache = new Map();
+  const iconCache = new Map<string, HTMLElement>();
 
-  const renderIcon = icon => {
+  const renderIcon = (icon: SystrayIcon): HTMLElement => {
     if (!iconCache.has(icon.id)) {
       const li = (
         <li id={icon.id}>
@@ -83,31 +98,30 @@ function App() {
             class="systray-icon"
             src={icon.iconUrl}
             title={icon.tooltip}
-            onClick={e => {
+            onClick={(e) => {
               e.preventDefault();
-              output.systray.onLeftClick(icon.id);
+              output.systray?.onLeftClick(icon.id);
             }}
-            onContextMenu={e => {
+            onContextMenu={(e) => {
               e.preventDefault();
-              output.systray.onRightClick(icon.id);
+              output.systray?.onRightClick(icon.id);
             }}
           />
         </li>
-      );
+      ) as unknown as HTMLElement;
       iconCache.set(icon.id, li);
     } else {
-      const cachedIcon = iconCache.get(icon.id);
-      const img = cachedIcon.querySelector('img');
-      if (img) {
-        img.src = icon.iconUrl;
-        img.title = icon.tooltip;
-      }
+      const cachedIcon = iconCache.get(icon.id)!;
+      const img = cachedIcon.querySelector('img')!;
+      img.src = icon.iconUrl;
+      img.title = icon.tooltip;
     }
-    return iconCache.get(icon.id);
+
+    return iconCache.get(icon.id)!;
   };
 
-  const updateCache = icons => {
-    const currentIds = new Set(icons.map(icon => icon.id));
+  const updateCache = (icons: SystrayIcon[]): void => {
+    const currentIds = new Set(icons.map((icon) => icon.id));
     iconCache.forEach((_, id) => {
       if (!currentIds.has(id)) {
         iconCache.delete(id);
@@ -115,17 +129,15 @@ function App() {
     });
   };
 
-  const SystrayIcons = createMemo(() => {
+  const SystrayIcons = createMemo<JSX.Element | null>(() => {
     if (output.systray) {
       updateCache(output.systray.icons);
 
       return output.systray.icons
-        .filter(icon => !icon.tooltip?.toLowerCase().includes('speakers'))
-
+        .filter((icon) => !icon.tooltip?.toLowerCase().includes('speakers'))
         .sort((a, b) => {
-          const getPriority = icon => {
+          const getPriority = (icon: SystrayIcon): number => {
             const tooltip = icon.tooltip?.toLowerCase() || '';
-            // Fan Control
             if (tooltip.includes('cpu core')) return 1;
             if (tooltip.includes('gpu')) return 2;
             return 99; // everything else gets a lower priority
@@ -133,16 +145,14 @@ function App() {
 
           return getPriority(a) - getPriority(b);
         })
-
-        .map(icon => renderIcon(icon));
+        .map((icon) => renderIcon(icon));
     }
 
     return null;
   });
 
-  const startCountdown = (name, action) => {
+  const startCountdown = (name: string, action: () => void): void => {
     if (countdownActive() === name) {
-      resetCountdown();
       action();
       return;
     }
@@ -151,57 +161,49 @@ function App() {
 
     setCountdownActive(name);
     countdownInteval = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
-          resetCountdown();
           action();
-          return;
         }
+
         return prev - 1;
       });
     }, 1000);
   };
 
-  const resetCountdown = () => {
+  const resetCountdown = (): void => {
     clearInterval(countdownInteval);
     countdownInteval = undefined;
-    setCountdownActive(false);
+    setCountdownActive('');
     setCountdown(60);
-  };
-
-  const toggleDropdown = () => {
-    const dropdownMenu = document.getElementById('dropdown');
-    const appleIcon = document.querySelector('.logo');
-    if (dropdownMenu && appleIcon) {
-      const isVisible = dropdownMenu.style.display === 'block';
-      dropdownMenu.style.display = isVisible ? 'none' : 'block';
-      appleIcon.classList.toggle('active', !isVisible);
-    }
   };
 
   return (
     <div class="app">
       <div class="left">
         <i
-          class="logo nf nf-fa-windows"
-          onClick={() => toggleDropdown()}
+          class={`logo nf nf-fa-windows ${isDropdownVisible() ? 'active' : ''}`}
+          onClick={() => {
+            setDropdownVisible(!isDropdownVisible());
+          }}
         ></i>
-        <ul id="dropdown">
+        <ul id="dropdown" style={{ display: isDropdownVisible() ? 'block' : 'none' }}>
           {dropdownOptions.map(({ name, action }) => (
             <li onClick={action}>
               <button>{name}</button>
             </li>
           ))}
+
           {countdownOptions.map(({ name, action }) => (
-            <li class={countdownActive() == name && `act`}>
+            <li class={countdownActive() === name ? 'act' : ''}>
               <button
                 onClick={() => {
                   startCountdown(name, action);
                 }}
               >
-                {name} {countdownActive() == name && `(${countdown()}s)`}
+                {name} {countdownActive() === name && `(${countdown()}s)`}
               </button>
-              {countdownActive() == name && (
+              {countdownActive() === name && (
                 <button onClick={resetCountdown}>Cancel</button>
               )}
             </li>
@@ -234,7 +236,7 @@ function App() {
                 step="2"
                 value={output.audio.defaultPlaybackDevice.volume}
                 onChange={(e: Event & { target: HTMLInputElement }) =>
-                  output.audio.setVolume(e.target.valueAsNumber)
+                  output.audio?.setVolume(e.target.valueAsNumber)
                 }
               />
             </li>
