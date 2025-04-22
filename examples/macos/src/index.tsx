@@ -216,12 +216,13 @@ function App() {
         setAppSpecificOptions(importCache.get(sanitizedTitle)!);
       } else {
         try {
-          const module = await import(`./applications/_${sanitizedTitle}.ts`);
+          const module = await import(`./applications/${sanitizedTitle}.ts`);
           const options = module.appMenuOptions || [];
           importCache.set(sanitizedTitle, options); // Cache the imported module
           setAppSpecificOptions(options);
         } catch {
-          console.warn(`No configuration found for ${sanitizedTitle}`);
+          console.log(`No specific options for ${sanitizedTitle}`);
+          setAppSpecificOptions([]);
         }
       }
     }

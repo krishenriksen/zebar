@@ -15,7 +15,7 @@
   "prettier": "@glzr/style-guide/prettier",
   "devDependencies": {
     "@glzr/style-guide": "1.1.0",
-    "prettier": "^3.5.3"
+    "prettier": "3.5.3"
   },
   "packageManager": "pnpm@10.9.0",
   "engines": {
