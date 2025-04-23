@@ -11,7 +11,7 @@ mod provider_function;
 mod provider_manager;
 mod provider_output;
 mod systray;
-pub mod window;
+mod window;
 
 pub use provider::*;
 pub use provider_config::*;

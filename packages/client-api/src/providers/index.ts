@@ -1,4 +1,3 @@
-export * from './window/window-provider-types';
 export * from './audio/audio-provider-types';
 export * from './battery/battery-provider-types';
 export * from './cpu/cpu-provider-types';
@@ -7,5 +6,6 @@ export * from './media/media-provider-types';
 export * from './memory/memory-provider-types';
 export * from './network/network-provider-types';
 export * from './systray/systray-provider-types';
+export * from './window/window-provider-types';
 export * from './create-provider';
 export * from './create-provider-group';

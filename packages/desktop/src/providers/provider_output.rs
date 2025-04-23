@@ -27,7 +27,6 @@ macro_rules! impl_provider_output {
 #[serde(untagged)]
 pub enum ProviderOutput {
   #[cfg(windows)]
-  Window(WindowOutput),
   Audio(AudioOutput),
   Battery(BatteryOutput),
   Cpu(CpuOutput),
@@ -35,6 +34,7 @@ pub enum ProviderOutput {
   Memory(MemoryOutput),
   Network(NetworkOutput),
   Systray(SystrayOutput),
+  Window(WindowOutput),
 }
 
 impl_provider_output! {
@@ -46,8 +46,8 @@ impl_provider_output! {
 
 #[cfg(windows)]
 impl_provider_output! {
-  Window(WindowOutput),
   Audio(AudioOutput),
   Media(MediaOutput),
   Systray(SystrayOutput),
+  Window(WindowOutput),
 }

@@ -98,7 +98,6 @@ async fn main() -> anyhow::Result<()> {
       commands::shell_spawn,
       commands::shell_write,
       commands::shell_kill,
-      commands::set_foreground_window,
     ])
     .build(tauri::generate_context!())?;
 

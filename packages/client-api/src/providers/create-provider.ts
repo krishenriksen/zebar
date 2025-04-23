@@ -1,9 +1,3 @@
-import { createWindowProvider } from './window/create-window-provider';
-import type {
-  WindowProviderConfig,
-  WindowProvider,
-} from './window/window-provider-types';
-
 import { createAudioProvider } from './audio/create-audio-provider';
 import type {
   AudioProviderConfig,
@@ -52,8 +46,13 @@ import type {
   SystrayProvider,
 } from './systray/systray-provider-types';
 
+import { createWindowProvider } from './window/create-window-provider';
+import type {
+  WindowProviderConfig,
+  WindowProvider,
+} from './window/window-provider-types';
+
 export interface ProviderConfigMap {
-  window: WindowProviderConfig;
   audio: AudioProviderConfig;
   battery: BatteryProviderConfig;
   cpu: CpuProviderConfig;
@@ -62,10 +61,10 @@ export interface ProviderConfigMap {
   memory: MemoryProviderConfig;
   network: NetworkProviderConfig;
   systray: SystrayProviderConfig;
+  window: WindowProviderConfig;
 }
 
-export interface ProviderMap {
-  window: WindowProvider;
+export interface ProviderMap {  
   audio: AudioProvider;
   battery: BatteryProvider;
   cpu: CpuProvider;
@@ -74,6 +73,7 @@ export interface ProviderMap {
   memory: MemoryProvider;
   network: NetworkProvider;
   systray: SystrayProvider;
+  window: WindowProvider;
 }
 
 export type ProviderType = keyof ProviderConfigMap;
@@ -97,8 +97,6 @@ export function createProvider<T extends ProviderConfig>(
   config: T,
 ): ProviderMap[T['type']] {
   switch (config.type) {
-    case 'window':
-      return createWindowProvider(config) as any;
     case 'audio':
       return createAudioProvider(config) as any;
     case 'battery':
@@ -115,6 +113,8 @@ export function createProvider<T extends ProviderConfig>(
       return createNetworkProvider(config) as any;
     case 'systray':
       return createSystrayProvider(config) as any;
+    case 'window':
+      return createWindowProvider(config) as any;      
     default:
       throw new Error('Not a supported provider type.');
   }

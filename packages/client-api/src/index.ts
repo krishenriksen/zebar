@@ -5,7 +5,6 @@ export {
   startWidgetPreset,
   shellExec,
   shellSpawn,
-  setForegroundWindow,
   type Widget,
   type WidgetWindow,
 } from './desktop';

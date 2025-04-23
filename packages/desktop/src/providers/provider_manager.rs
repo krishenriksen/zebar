@@ -196,7 +196,7 @@ impl ProviderManager {
     let mut provider_refs = self.provider_refs.lock().await;
 
     // No-op if the provider has already been created (but has not emitted
-    // yet). Multiple frontend clients can call `create` for the same
+    // yet). Multwindowle frontend clients can call `create` for the same
     // provider, and all will receive the same output once the provider
     // emits.
     if provider_refs.contains_key(&config_hash) {
@@ -244,6 +244,9 @@ impl ProviderManager {
     common: CommonProviderState,
   ) -> anyhow::Result<(task::JoinHandle<()>, RuntimeType)> {
     let runtime_type = match config {
+      #[cfg(windows)]
+      ProviderConfig::Window(..) => RuntimeType::Async,
+      #[cfg(windows)]
       ProviderConfig::Systray(..) => RuntimeType::Async,
       _ => RuntimeType::Sync,
     };
@@ -252,8 +255,14 @@ impl ProviderManager {
     let task_handle = match &runtime_type {
       RuntimeType::Async => task::spawn(async move {
         match config {
+          #[cfg(windows)]
           ProviderConfig::Systray(config) => {
             let mut provider = SystrayProvider::new(config, common);
+            provider.start_async().await;
+          }
+          #[cfg(windows)]
+          ProviderConfig::Window(config) => {
+            let mut provider = WindowProvider::new(config, common);
             provider.start_async().await;
           }
           _ => unreachable!(),
@@ -264,10 +273,6 @@ impl ProviderManager {
       RuntimeType::Sync => task::spawn_blocking(move || {
         match config {
           #[cfg(windows)]
-          ProviderConfig::Window(config) => {
-            let mut provider = WindowProvider::new(config, common);
-            provider.start_sync();
-          }
           ProviderConfig::Audio(config) => {
             let mut provider = AudioProvider::new(config, common);
             provider.start_sync();

@@ -1,4 +1,4 @@
-import { shellExec, setForegroundWindow } from 'zebar';
+import { shellExec } from 'zebar';
 import { output } from './index';
 import { DropdownOption } from '../index';
 
@@ -21,16 +21,7 @@ export async function performAction(action: string): Promise<string> {
 
 // Wrapper function to handle setting the foreground window
 export async function handleDropdownAction(action: () => void | Promise<void>) {
-  const hwnd = output.window?.hwnd; // Retrieve the hwnd from the global output
-  if (hwnd) {
-    try {
-      await setForegroundWindow(parseInt(hwnd)); // Convert hwnd to a number and pass it
-    } catch (error) {
-      console.error('Failed to set foreground window:', error);
-    }
-  } else {
-    console.warn('No hwnd available for the current window.');
-  }
+
 
   // Execute the specific action for the dropdown option
   await action();

@@ -17,7 +17,6 @@ export const desktopCommands = {
   callProviderFunction,
   setAlwaysOnTop,
   setSkipTaskbar,
-  setForegroundWindow,
   shellExec,
   shellSpawn,
   shellWrite,
@@ -27,7 +26,7 @@ export const desktopCommands = {
 export type ProviderFunction =
   | AudioFunction
   | MediaFunction
-  | SystrayFunction;
+  | SystrayFunction
 
 export interface AudioFunction {
   type: 'audio';
@@ -107,10 +106,6 @@ function setAlwaysOnTop(): Promise<void> {
 
 function setSkipTaskbar(skip: boolean): Promise<void> {
   return invoke<void>('set_skip_taskbar', { skip });
-}
-
-function setForegroundWindow(hwnd: number): Promise<void> {
-  return invoke<void>('set_foreground_window', { hwnd });
 }
 
 function shellExec<TOutput extends string | Uint8Array = string>(

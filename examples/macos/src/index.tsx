@@ -2,7 +2,7 @@
 import './index.css';
 import { render } from 'solid-js/web';
 import { createStore } from 'solid-js/store';
-import { createProviderGroup, setForegroundWindow } from 'zebar';
+import { createProviderGroup } from 'zebar';
 import { createSignal, createEffect, createMemo, JSX } from 'solid-js';
 
 import { performAction } from './actions';
@@ -39,9 +39,9 @@ export type DropdownOption = {
 };
 
 const providers = createProviderGroup({
-  window: { type: 'window', refreshInterval: 1000 },
   audio: { type: 'audio' },
-  systray: { type: 'systray', refreshInterval: 5000 },
+  systray: { type: 'systray' },
+  window: { type: 'window' },
   date: { type: 'date', formatting: 'EEE d MMM t' },
   fullDate: { type: 'date', formatting: 'EEEE, MMMM d, yyyy' },
 });
@@ -208,6 +208,8 @@ function App() {
   const importCache = new Map<string, DropdownOption[]>(); // Cache for imported modules
 
   createEffect(async () => {
+    console.log('Window title:', output.window?.title);
+
     if (output.window?.title) {
       const sanitizedTitle = output.window.title.replace(/\s+/g, '');
 
@@ -289,15 +291,6 @@ function App() {
                 onClick={async () => {
                   if (output.window?.title === 'File Explorer') {
                     performAction('start $HOME');
-                  } else {
-                    const hwnd = output.window?.hwnd; // Assuming hwnd is available in output.window
-                    if (hwnd) {
-                      try {
-                        await setForegroundWindow(parseInt(hwnd));
-                      } catch (error) {
-                        console.error('Failed to set foreground window:', error);
-                      }
-                    }
                   }
                 }}
               >

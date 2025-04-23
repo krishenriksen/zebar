@@ -2,11 +2,6 @@ import type { Provider } from '../create-base-provider';
 
 export interface SystrayProviderConfig {
   type: 'systray';
-
-  /**
-   * How often this provider refreshes in milliseconds.
-   */
-  refreshInterval?: number;
 }
 
 export type SystrayProvider = Provider<

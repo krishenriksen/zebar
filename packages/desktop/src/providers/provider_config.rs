@@ -3,19 +3,17 @@ use serde::Deserialize;
 #[cfg(windows)]
 use super::{
   audio::AudioProviderConfig, media::MediaProviderConfig,
-  systray::SystrayProviderConfig,
+  systray::SystrayProviderConfig, window::WindowProviderConfig,
 };
 use super::{
   battery::BatteryProviderConfig, cpu::CpuProviderConfig,
   memory::MemoryProviderConfig, network::NetworkProviderConfig,
-  window::WindowProviderConfig,
 };
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ProviderConfig {
   #[cfg(windows)]
-  Window(WindowProviderConfig),
   Audio(AudioProviderConfig),
   Battery(BatteryProviderConfig),
   Cpu(CpuProviderConfig),
@@ -23,4 +21,5 @@ pub enum ProviderConfig {
   Memory(MemoryProviderConfig),
   Network(NetworkProviderConfig),
   Systray(SystrayProviderConfig),
+  Window(WindowProviderConfig),
 }

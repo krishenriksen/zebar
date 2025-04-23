@@ -10,7 +10,6 @@ import type {
 
 const systrayProviderConfigSchema = z.object({
   type: z.literal('systray'),
-  refreshInterval: z.coerce.number().default(5 * 1000),
 });
 
 export function createSystrayProvider(

@@ -32,16 +32,6 @@ type ShellEvent<T extends string | Uint8Array = string> =
     };
 
 /**
- * Sets the specified window as the foreground window.
- *
- * @param {number} hwnd - The handle of the window to bring to the foreground.
- * @throws - If the operation fails.
- */
-export async function setForegroundWindow(hwnd: number): Promise<void> {
-  return await desktopCommands.setForegroundWindow(hwnd);
-}
-
-/**
  * Executes a shell command and waits for completion.
  *
  * @example
