@@ -23,14 +23,37 @@ body {
 }
 
 i {
-  margin-right: 5px;
+  font-size: 16px;
+  color: rgba(128, 128, 128, 90%);
+  float: right;
 }
 
-.logo {
+i span {
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+i::before {
+  margin: 4px 5px 0 0;
+  font-size: 11px;
+  float: left;
+}
+
+.left i {
+  margin-left: 15px;
+}
+
+.left i.logo {
   margin: 0;
   padding: 4px 12px 4px 20px;
-  font-size: 18px;
+  font-size: 17px;
+  color: rgb(0 0 0 / 90%);
   border-radius: 4px;
+}
+
+.left i.logo::before {
+  margin: inherit;
+  font-size: inherit;
+  float: inherit;
 }
 
 .logo.active {
@@ -111,7 +134,8 @@ button:not(.updates):hover,
   border-radius: 4px;
 }
 
-li.inline-flex button:not(.updates):hover {
+li.inline-flex button:not(.updates):hover,
+li.inline-flex:hover i {
   color: #ffffff;
   background-color: #007aff;
   text-shadow: 0 0.5px 1px rgba(255, 255, 255, 0.25);

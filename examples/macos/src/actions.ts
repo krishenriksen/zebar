@@ -1,6 +1,4 @@
-import { shellExec } from 'zebar';
-import { output } from './index';
-import { DropdownOption } from '../index';
+import { shellExec, setForegroundWindow } from 'zebar';
 
 export async function performAction(action: string): Promise<string> {
   try {
@@ -19,21 +17,33 @@ export async function performAction(action: string): Promise<string> {
   }
 }
 
-// Wrapper function to handle setting the foreground window
-export async function handleDropdownAction(action: () => void | Promise<void>) {
+/**
+ * Wraps an action with additional logic, such as setting the foreground window.
+ * @param name - The name of the menu item.
+ * @param menuItemActions - The object associating menu item names with actions.
+ */
+export function createMenuItem(
+  name: string,
+  menuItemActions: Record<string, () => Promise<string>>,
+): {
+  name: string;
+  action: (hwnd?: number) => void | Promise<void>;
+} {
+  const action = menuItemActions[name];
 
+  if (!action) {
+    throw new Error(`Action not defined for menu item: ${name}`);
+  }
 
-  // Execute the specific action for the dropdown option
-  await action();
-}
-
-export function getAppMenuOptions(menuNames: string[]): DropdownOption[] {
-  return menuNames.map((name) => ({
+  return {
     name,
-    action: async () => {
-      await handleDropdownAction(() => {
-        console.log(`${name} menu clicked!`);
-      });
+    action: async (hwnd?: number) => {
+      try {
+        setForegroundWindow(hwnd);
+        action();
+      } catch (error) {
+        console.error(`Error executing action for '${name}':`, error);
+      }
     },
-  }));
+  };
 }

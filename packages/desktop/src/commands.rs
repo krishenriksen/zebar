@@ -1,6 +1,8 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use tauri::{State, Window};
+#[cfg(target_os = "windows")]
+use window_util::Window as UtilWindow;
 
 #[cfg(target_os = "macos")]
 use crate::common::macos::WindowExtMacOs;
@@ -197,4 +199,18 @@ pub async fn shell_kill(
   shell_state: State<'_, ShellState>,
 ) -> anyhow::Result<(), String> {
   shell_state.kill(pid).map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+pub fn set_foreground_window(hwnd: isize) -> Result<String, String> {
+  match UtilWindow::set_foreground_window(hwnd) {
+    Ok(_) => Ok(format!(
+      "Successfully set window {} to the foreground.",
+      hwnd
+    )),
+    Err(err) => Err(format!(
+      "Failed to set window {} to the foreground: {}",
+      hwnd, err
+    )),
+  }
 }

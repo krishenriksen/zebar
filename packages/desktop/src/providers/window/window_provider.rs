@@ -2,8 +2,7 @@ use serde::{Deserialize, Serialize};
 use window_util::Window;
 
 use crate::providers::{
-  CommonProviderState, Provider,
-  ProviderInputMsg, RuntimeType,
+  CommonProviderState, Provider, ProviderInputMsg, RuntimeType,
 };
 
 #[derive(Deserialize, Debug)]
@@ -38,28 +37,28 @@ impl Provider for WindowProvider {
   }
 
   async fn start_async(&mut self) {
-      let Ok(mut window) = Window::new() else {
-          self.common.emitter.emit_output::<WindowOutput>(Err(
-              anyhow::anyhow!("Failed to initialize window."),
-          ));
-          return;
-      };
+    let Ok(mut window) = Window::new() else {
+      self.common.emitter.emit_output::<WindowOutput>(Err(
+        anyhow::anyhow!("Failed to initialize window."),
+      ));
+      return;
+    };
 
-      loop {
-          tokio::select! {
-              Some(event) = window.events() => {
-                  self.common.emitter.emit_output(Ok(WindowOutput {
-                      title: event.title,
-                      hwnd: event.hwnd,
-                  }));
-              }
-              Some(input) = self.common.input.async_rx.recv() => {
-                  match input {
-                      ProviderInputMsg::Stop => break,
-                      _ => {}
-                  }
+    loop {
+      tokio::select! {
+          Some(event) = window.events() => {
+              self.common.emitter.emit_output(Ok(WindowOutput {
+                  title: event.title,
+                  hwnd: event.hwnd,
+              }));
+          }
+          Some(input) = self.common.input.async_rx.recv() => {
+              match input {
+                  ProviderInputMsg::Stop => break,
+                  _ => {}
               }
           }
       }
+    }
   }
 }

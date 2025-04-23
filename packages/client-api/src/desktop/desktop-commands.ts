@@ -21,6 +21,7 @@ export const desktopCommands = {
   shellSpawn,
   shellWrite,
   shellKill,
+  setForegroundWindow,
 };
 
 export type ProviderFunction =
@@ -137,6 +138,10 @@ function shellWrite(
 
 function shellKill(processId: number): Promise<void> {
   return invoke<void>('shell_kill', { processId });
+}
+
+function setForegroundWindow(hwnd: number): Promise<void> {
+  return invoke<void>('set_foreground_window', { hwnd });
 }
 
 export interface ShellCommandOptions {

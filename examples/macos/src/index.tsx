@@ -3,42 +3,16 @@ import './index.css';
 import { render } from 'solid-js/web';
 import { createStore } from 'solid-js/store';
 import { createProviderGroup } from 'zebar';
-import { createSignal, createEffect, createMemo, JSX } from 'solid-js';
+import { createSignal, createEffect, createMemo } from 'solid-js';
 
 import { performAction } from './actions';
-import { getUpdates } from './updates';
+
+import { dropdownOptions } from './dropdownOptions';
 import { countdownOptions } from './countdownOptions';
 
-/**
- * 
- */
-type ProviderOutput = {
-  window?: { title: string, hwnd: string };
-  audio?: {
-    defaultPlaybackDevice?: { volume: number };
-    setVolume: (volume: number) => void;
-  };
-  systray?: {
-    icons: SystrayIcon[];
-    onLeftClick: (id: string) => void;
-    onRightClick: (id: string) => void;
-  };
-  date?: { formatted: string };
-  fullDate?: { formatted: string };
-};
-
-type SystrayIcon = {
-  id: string;
-  iconUrl: string;
-  tooltip: string;
-};
-
-export type DropdownOption = {
-  name: string;
-  action: () => void;
-};
-
 const providers = createProviderGroup({
+  cpu: { type: 'cpu', refreshInterval: 10000 },
+  memory: { type: 'memory', refreshInterval: 10000 },
   audio: { type: 'audio' },
   systray: { type: 'systray' },
   window: { type: 'window' },
@@ -46,72 +20,34 @@ const providers = createProviderGroup({
   fullDate: { type: 'date', formatting: 'EEEE, MMMM d, yyyy' },
 });
 
-export const [output, setOutput] = createStore<ProviderOutput>(
-  providers.outputMap,
-);
+export const [output, setOutput] = createStore(providers.outputMap);
+
+export type DropdownOption = {
+  name: string | (() => string);
+  icon?: string | { icon: string; key: string };
+  action: (hwnd?: number) => void;
+  hwnd?: number;
+};
 
 function App() {
-  const [isDropdownVisible, setDropdownVisible] =
-    createSignal<boolean>(false);
-  const [countdown, setCountdown] = createSignal<number>(60);
-  const [countdownActive, setCountdownActive] = createSignal<string>('');
-  let countdownInteval: number | undefined;
-
-  /**
-   * Fetches the number of updates available on the system.
-   */
-  const [updates, setUpdates] = createSignal<string>('');
-
-  createEffect(() => {
-    getUpdates().then(setUpdates);
-
-    const interval = setInterval(
-      () => {
-        getUpdates().then(setUpdates);
-      },
-      2 * 60 * 60 * 1000,
-    ); // 2 hours in milliseconds
-
-    return () => clearInterval(interval);
-  });
-
-  /**
-   * Performs an action based on the provided command.
-   */
-  const dropdownOptions = createMemo(() => [
-    {
-      name: 'About This PC',
-      action: () => performAction('start ms-settings:'),
-    },
-    {
-      name: 'System Preferences...',
-      action: () => performAction('start ms-settings:system'),
-    },
-    ...(updates() && updates() !== 'Error'
-      ? [
-          {
-            name: () => {
-              const count = updates();
-              return count === '1' ? '1 update' : `${count} updates`;
-            },
-            action: () => performAction('start ms-settings:windowsupdate'),
-          },
-        ]
-      : []),
-    {
-      name: 'App Store...',
-      action: () => performAction('start ms-windows-store:'),
-    },
-  ]);
-
   createEffect(() => providers.onOutput(setOutput));
+
+  const [isDropdownVisible, setDropdownVisible] = createSignal(false);
+  const [countdown, setCountdown] = createSignal(60);
+  const [countdownActive, setCountdownActive] = createSignal('');
+  let countdownInteval: number | undefined;
 
   /**
    * Renders the icons in the system tray.
    */
-  const iconCache = new Map<string, HTMLElement>();
+  type SystrayIcon = {
+    id: string;
+    iconUrl: string;
+    tooltip: string;
+  };
+  const iconCache = new Map();
 
-  const renderIcon = (icon: SystrayIcon): HTMLElement => {
+  const renderIcon = (icon: SystrayIcon) => {
     if (!iconCache.has(icon.id)) {
       const li = (
         <li
@@ -128,19 +64,19 @@ function App() {
         >
           <img src={icon.iconUrl} title={icon.tooltip} />
         </li>
-      ) as unknown as HTMLElement;
+      );
       iconCache.set(icon.id, li);
     } else {
-      const cachedIcon = iconCache.get(icon.id)!;
-      const img = cachedIcon.querySelector('img')!;
+      const cachedIcon = iconCache.get(icon.id);
+      const img = cachedIcon.querySelector('img');
       img.src = icon.iconUrl;
       img.title = icon.tooltip;
     }
 
-    return iconCache.get(icon.id)!;
+    return iconCache.get(icon.id);
   };
 
-  const updateCache = (icons: SystrayIcon[]): void => {
+  const updateCache = (icons: SystrayIcon[]) => {
     const currentIds = new Set(icons.map(icon => icon.id));
     iconCache.forEach((_, id) => {
       if (!currentIds.has(id)) {
@@ -149,14 +85,17 @@ function App() {
     });
   };
 
-  const SystrayIcons = createMemo<JSX.Element | null>(() => {
+  const SystrayIcons = createMemo(() => {
     if (output.systray) {
       updateCache(output.systray.icons);
 
       return output.systray.icons
-        .filter(icon => !icon.tooltip?.toLowerCase().includes('speakers'))
-        .sort((a, b) => {
-          const getPriority = (icon: SystrayIcon): number => {
+        .filter(
+          (icon: SystrayIcon) =>
+            !icon.tooltip?.toLowerCase().includes('speakers'),
+        )
+        .sort((a: SystrayIcon, b: SystrayIcon) => {
+          const getPriority = (icon: SystrayIcon) => {
             const tooltip = icon.tooltip?.toLowerCase() || '';
             if (tooltip.includes('cpu core')) return 1;
             if (tooltip.includes('gpu')) return 2;
@@ -165,13 +104,13 @@ function App() {
 
           return getPriority(a) - getPriority(b);
         })
-        .map(icon => renderIcon(icon));
+        .map((icon: SystrayIcon) => renderIcon(icon));
     }
 
     return null;
   });
 
-  const startCountdown = (name: string, action: () => void): void => {
+  const startCountdown = (name: string, action: () => void) => {
     if (countdownActive() === name) {
       resetCountdown();
       action();
@@ -179,8 +118,8 @@ function App() {
     }
 
     resetCountdown();
-
     setCountdownActive(name);
+
     countdownInteval = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
@@ -193,7 +132,7 @@ function App() {
     }, 1000);
   };
 
-  const resetCountdown = (): void => {
+  const resetCountdown = () => {
     clearInterval(countdownInteval);
     countdownInteval = undefined;
     setCountdownActive('');
@@ -204,31 +143,78 @@ function App() {
    * Get menu entries for specific applications
    * Dynamically import the file based on the application title
    */
-  const [appSpecificOptions, setAppSpecificOptions] = createSignal<DropdownOption[]>([]);
+  const [appSpecificOptions, setAppSpecificOptions] = createSignal<
+    DropdownOption[]
+  >([]);
   const importCache = new Map<string, DropdownOption[]>(); // Cache for imported modules
+  const defaultTitle = 'File Explorer';
+  const replaceTitle = ['Zebar - macos/macos', 'Program Manager'];
 
   createEffect(async () => {
-    console.log('Window title:', output.window?.title);
-
-    if (output.window?.title) {
-      const sanitizedTitle = output.window.title.replace(/\s+/g, '');
+    if (output.window?.title && output.window?.hwnd) {
+      const sanitizedTitle = getNormalizedWindowTitle().replace(
+        /\s+/g,
+        '',
+      );
+      const hwnd = parseInt(output.window.hwnd);
 
       if (importCache.has(sanitizedTitle)) {
         // Use cached module if available
-        setAppSpecificOptions(importCache.get(sanitizedTitle)!);
+        setAppSpecificOptions(importCache.get(sanitizedTitle));
       } else {
         try {
-          const module = await import(`./applications/${sanitizedTitle}.ts`);
-          const options = module.appMenuOptions || [];
+          const module = await import(
+            `./applications/${sanitizedTitle}.ts`
+          );
+          const options = module.menuItems.map((item: any) => ({
+            ...item,
+            hwnd,
+          }));
           importCache.set(sanitizedTitle, options); // Cache the imported module
           setAppSpecificOptions(options);
-        } catch {
-          console.log(`No specific options for ${sanitizedTitle}`);
+        } catch (err) {
+          //console.log(`No specific options for ${sanitizedTitle}`);
           setAppSpecificOptions([]);
         }
       }
     }
   });
+
+  const getNormalizedTitle = (
+    fullTitle: string,
+    defaultTitle: string,
+    replaceTitle: string | any[],
+  ) => {
+    if (replaceTitle.includes(fullTitle)) {
+      return defaultTitle;
+    }
+
+    // Replace en-dash and em-dash with space-hyphen-space
+    const processedTitle = fullTitle
+      .replace(' – ', ' - ') // En-dash
+      .replace(' — ', ' - '); // Em-dash
+
+    // Extract the last part of the title or fallback to the full title
+    return (
+      processedTitle
+        .split(' - ')
+        .filter(s => s.trim() !== '')
+        .pop()
+        ?.trim() || defaultTitle
+    );
+  };
+
+  const getNormalizedWindowTitle = () => {
+    if (output.window?.title) {
+      return getNormalizedTitle(
+        output.window.title,
+        defaultTitle,
+        replaceTitle,
+      );
+    }
+
+    return defaultTitle;
+  };
 
   return (
     <div class="app">
@@ -241,10 +227,10 @@ function App() {
         ></i>
 
         <ul>
-          {dropdownOptions().map(({ name, action }) => (
+          {dropdownOptions.map(({ name, action }) => (
             <li class={isDropdownVisible() ? 'inline-flex' : 'none'}>
               <button
-                onClick={action}
+                onClick={() => action()}
                 class={
                   typeof name === 'function' && name().includes('update')
                     ? 'updates'
@@ -264,7 +250,7 @@ function App() {
             </li>
           ))}
 
-          {countdownOptions.map(({ name, action }) => (
+          {countdownOptions.map(({ name, icon, action }) => (
             <li
               classList={{
                 act: countdownActive() === name,
@@ -278,6 +264,15 @@ function App() {
                 }}
               >
                 {name} {countdownActive() === name && `(${countdown()}s)`}
+                {typeof icon === 'string' ? (
+                  <i class={`nf ${icon}`}></i>
+                ) : (
+                  icon && (
+                    <i class={`nf ${icon.icon}`}>
+                      <span>{icon.key}</span>
+                    </i>
+                  )
+                )}
               </button>
               {countdownActive() === name && (
                 <button onClick={resetCountdown}>Cancel</button>
@@ -287,29 +282,57 @@ function App() {
 
           {!isDropdownVisible() && (
             <li class="application">
-              <button
-                onClick={async () => {
-                  if (output.window?.title === 'File Explorer') {
-                    performAction('start $HOME');
-                  }
-                }}
-              >
-                {output.window?.title || 'File Explorer'}
-              </button>
+              <button>{getNormalizedWindowTitle()}</button>
             </li>
           )}
 
-          {!isDropdownVisible() && appSpecificOptions() &&
-            appSpecificOptions().map(({ name, action }) => (
+          {!isDropdownVisible() &&
+            appSpecificOptions().map(({ name, action, hwnd }) => (
               <li>
-                <button onClick={action}>{name}</button>
+                <button
+                  onClick={() =>
+                    typeof action === 'function' ? action(hwnd) : undefined
+                  }
+                >
+                  {typeof name === 'string' ? name : name()}
+                </button>
               </li>
-          ))}
+            ))}
         </ul>
       </div>
 
       <div class="right">
         <ul>
+          {output.cpu && (
+            <li title={output.cpu?.frequency}>
+              <button
+                onClick={() => {
+                  performAction('Start-Process taskmgr');
+                }}
+              >
+                <i class="nf nf-oct-cpu">
+                  <span class={output.cpu.usage > 85 ? 'high-usage' : ''}>
+                    {Math.round(output.cpu.usage)}%
+                  </span>
+                </i>
+              </button>
+            </li>
+          )}
+
+          {output.memory && (
+            <li title={output.memory?.freeMemory}>
+              <button
+                onClick={() => {
+                  performAction('Start-Process taskmgr');
+                }}
+              >
+                <i class="nf nf-fae-chip">
+                  <span>{Math.round(output.memory.usage)}%</span>
+                </i>
+              </button>
+            </li>
+          )}
+
           {output.audio?.defaultPlaybackDevice && (
             <li>
               <input
@@ -318,7 +341,7 @@ function App() {
                 max="100"
                 step="2"
                 value={output.audio.defaultPlaybackDevice.volume}
-                onChange={(e: Event & { target: HTMLInputElement }) =>
+                onChange={e =>
                   output.audio?.setVolume(e.target.valueAsNumber)
                 }
               />

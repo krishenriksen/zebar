@@ -17,6 +17,10 @@ export const countdownOptions: DropdownOption[] = [
   },
   {
     name: 'Lock Screen',
+    icon: {
+      icon: 'nf-md-apple_keyboard_command',
+      key: 'L',
+    },
     action: () => performAction('rundll32.exe user32.dll,LockWorkStation'),
   },
   {

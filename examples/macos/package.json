@@ -4,7 +4,9 @@
   "description": "",
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --watch"
+    "dev": "vite build --watch",
+    "format": "prettier --write . && pnpm run -r format",
+    "lint": "prettier --check . && pnpm run -r lint"
   },
   "dependencies": {
     "solid-js": "1.9.5"
