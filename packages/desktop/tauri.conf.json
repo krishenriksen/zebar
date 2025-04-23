@@ -22,7 +22,7 @@
     "resources": ["resources/*", "../../examples/**/*"],
     "targets": ["msi"],
     "windows": {
-      "signCommand": "echo 'powershell -ExecutionPolicy Bypass -File ./resources/scripts/sign.ps1 -FilePath %1'",
+      "signCommand": "",
       "wix": {
         "template": "./installer.wxs"
       }
