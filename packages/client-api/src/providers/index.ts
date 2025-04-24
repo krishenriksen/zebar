@@ -1,6 +1,7 @@
 export * from './audio/audio-provider-types';
 export * from './battery/battery-provider-types';
 export * from './cpu/cpu-provider-types';
+export * from './gpu/gpu-provider-types';
 export * from './date/date-provider-types';
 export * from './media/media-provider-types';
 export * from './memory/memory-provider-types';

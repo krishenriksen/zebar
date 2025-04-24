@@ -6,7 +6,7 @@ use super::{
   systray::SystrayProviderConfig, window::WindowProviderConfig,
 };
 use super::{
-  battery::BatteryProviderConfig, cpu::CpuProviderConfig,
+  battery::BatteryProviderConfig, cpu::CpuProviderConfig, gpu::GpuProviderConfig,
   memory::MemoryProviderConfig, network::NetworkProviderConfig,
 };
 
@@ -17,6 +17,7 @@ pub enum ProviderConfig {
   Audio(AudioProviderConfig),
   Battery(BatteryProviderConfig),
   Cpu(CpuProviderConfig),
+  Gpu(GpuProviderConfig),
   Media(MediaProviderConfig),
   Memory(MemoryProviderConfig),
   Network(NetworkProviderConfig),

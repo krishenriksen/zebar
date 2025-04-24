@@ -15,7 +15,7 @@ use super::{
   window::WindowProvider,
 };
 use super::{
-  battery::BatteryProvider, cpu::CpuProvider, memory::MemoryProvider,
+  battery::BatteryProvider, cpu::CpuProvider, gpu::GpuProvider, memory::MemoryProvider,
   network::NetworkProvider, Provider, ProviderConfig, ProviderFunction,
   ProviderFunctionResponse, ProviderFunctionResult, ProviderOutput,
   RuntimeType,
@@ -285,6 +285,10 @@ impl ProviderManager {
             let mut provider = CpuProvider::new(config, common);
             provider.start_sync();
           }
+          ProviderConfig::Gpu(config) => {
+            let mut provider = GpuProvider::new(config, common);
+            provider.start_sync();
+          }          
           #[cfg(windows)]
           ProviderConfig::Media(config) => {
             let mut provider = MediaProvider::new(config, common);

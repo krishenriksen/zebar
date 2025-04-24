@@ -16,6 +16,12 @@ import type {
   CpuProvider,
 } from './cpu/cpu-provider-types';
 
+import { createGpuProvider } from './gpu/create-gpu-provider';
+import type {
+  GpuProviderConfig,
+  GpuProvider,
+} from './gpu/gpu-provider-types';
+
 import { createDateProvider } from './date/create-date-provider';
 import type {
   DateProviderConfig,
@@ -56,6 +62,7 @@ export interface ProviderConfigMap {
   audio: AudioProviderConfig;
   battery: BatteryProviderConfig;
   cpu: CpuProviderConfig;
+  gpu: GpuProviderConfig;
   date: DateProviderConfig;
   media: MediaProviderConfig;
   memory: MemoryProviderConfig;
@@ -68,6 +75,7 @@ export interface ProviderMap {
   audio: AudioProvider;
   battery: BatteryProvider;
   cpu: CpuProvider;
+  gpu: GpuProvider;
   date: DateProvider;
   media: MediaProvider;
   memory: MemoryProvider;
@@ -103,6 +111,8 @@ export function createProvider<T extends ProviderConfig>(
       return createBatteryProvider(config) as any;
     case 'cpu':
       return createCpuProvider(config) as any;
+    case 'gpu':
+      return createGpuProvider(config) as any;      
     case 'date':
       return createDateProvider(config) as any;
     case 'media':

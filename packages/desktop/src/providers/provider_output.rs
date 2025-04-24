@@ -6,7 +6,7 @@ use super::{
   window::WindowOutput,
 };
 use super::{
-  battery::BatteryOutput, cpu::CpuOutput, memory::MemoryOutput,
+  battery::BatteryOutput, cpu::CpuOutput, gpu::GpuOutput, memory::MemoryOutput,
   network::NetworkOutput,
 };
 
@@ -30,6 +30,7 @@ pub enum ProviderOutput {
   Audio(AudioOutput),
   Battery(BatteryOutput),
   Cpu(CpuOutput),
+  Gpu(GpuOutput),
   Media(MediaOutput),
   Memory(MemoryOutput),
   Network(NetworkOutput),
@@ -40,6 +41,7 @@ pub enum ProviderOutput {
 impl_provider_output! {
   Battery(BatteryOutput),
   Cpu(CpuOutput),
+  Gpu(GpuOutput),
   Memory(MemoryOutput),
   Network(NetworkOutput),
 }

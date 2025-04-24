@@ -12,6 +12,7 @@ import { countdownOptions } from './countdownOptions';
 
 const providers = createProviderGroup({
   cpu: { type: 'cpu', refreshInterval: 10000 },
+  gpu: { type: 'gpu', refreshInterval: 10000 },
   memory: { type: 'memory', refreshInterval: 10000 },
   audio: { type: 'audio' },
   systray: { type: 'systray' },
@@ -304,7 +305,7 @@ function App() {
       <div class="right">
         <ul>
           {output.cpu && (
-            <li title={output.cpu?.frequency}>
+            <li title="CPU Usage">
               <button
                 onClick={() => {
                   performAction('Start-Process taskmgr');
@@ -320,7 +321,7 @@ function App() {
           )}
 
           {output.memory && (
-            <li title={output.memory?.freeMemory}>
+            <li title="Memory Usage">
               <button
                 onClick={() => {
                   performAction('Start-Process taskmgr');
@@ -332,6 +333,50 @@ function App() {
               </button>
             </li>
           )}
+
+          {output.gpu && output.gpu.gpus && output.gpu.gpus.map((gpu: any, index: number) => (
+            <>
+              <li title={`GPU Usage (${index})`}>
+                <button
+                  onClick={() => {
+                    performAction('Start-Process taskmgr');
+                  }}
+                >
+                  <i class="nf nf-cod-chip">
+                    <span class={gpu.utilizationGpu > 85 ? 'high-usage' : ''}>
+                      {Math.round(gpu.utilizationGpu)}%
+                    </span>
+                  </i>
+                </button>
+              </li>
+              <li title={`GPU Memory Usage (${index})`}>
+                <button
+                  onClick={() => {
+                    performAction('Start-Process taskmgr');
+                  }}
+                >
+                  <i class="nf nf-md-chip">
+                    <span class={gpu.utilizationMemory > 85 ? 'high-usage' : ''}>
+                      {Math.round(gpu.utilizationMemory)}%
+                    </span>
+                  </i>
+                </button>
+              </li>
+              <li title={`GPU Temperature (${index})`}>
+                <button
+                  onClick={() => {
+                    performAction('Start-Process taskmgr');
+                  }}
+                >
+                  <i class="nf nf-fa-temperature_empty">
+                    <span class={gpu.temperature > 85 ? 'high-usage' : ''}>
+                      {gpu.temperature}
+                    </span>
+                  </i>
+                </button>
+              </li>
+            </>
+          ))}
 
           {output.audio?.defaultPlaybackDevice && (
             <li>
