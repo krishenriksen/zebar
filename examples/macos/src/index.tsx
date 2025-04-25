@@ -10,10 +10,13 @@ import { performAction } from './actions';
 import { dropdownOptions } from './dropdownOptions';
 import { countdownOptions } from './countdownOptions';
 
-const providers = createProviderGroup({
+/*
   cpu: { type: 'cpu', refreshInterval: 5000 },
   memory: { type: 'memory', refreshInterval: 5000 },
   gpu: { type: 'gpu', refreshInterval: 5000 },
+*/
+
+const providers = createProviderGroup({
   audio: { type: 'audio' },
   systray: { type: 'systray' },
   window: { type: 'window' },
@@ -34,11 +37,6 @@ function App() {
   createEffect(() => providers.onOutput(setOutput));
 
   const [isDropdownVisible, setDropdownVisible] = createSignal(false);
-  const [countdown, setCountdown] = createSignal(60);
-  const [countdownActive, setCountdownActive] = createSignal('');
-  let countdownInteval: number | undefined;
-
-  const [isVolumeVisible, setVolumeVisible] = createSignal(false);
 
   /**
    * Renders the icons in the system tray.
@@ -113,6 +111,12 @@ function App() {
     return null;
   });
 
+  /**
+   * Countdown timer for specific actions
+   */
+  const [countdown, setCountdown] = createSignal(60);
+  const [countdownActive, setCountdownActive] = createSignal('');
+  let countdownInteval: number | undefined;  
   const startCountdown = (name: string, action: () => void) => {
     if (countdownActive() === name) {
       resetCountdown();
@@ -163,7 +167,8 @@ function App() {
 
       if (importCache.has(sanitizedTitle)) {
         // Use cached module if available
-        setAppSpecificOptions(importCache.get(sanitizedTitle));
+        const cachedOptions = importCache.get(sanitizedTitle) ?? [];
+        setAppSpecificOptions(cachedOptions);
       } else {
         try {
           const module = await import(
@@ -217,6 +222,26 @@ function App() {
     }
 
     return defaultTitle;
+  };
+
+  /**
+   * Handle volume slider visibility
+   * Toggles the volume slider visibility and sets a timeout to hide it after a delay
+   * @param {MouseEvent} e - The click event
+   * @returns {void}
+   */
+  const [isVolumeVisible, setVolumeVisible] = createSignal(false);
+  let timeoutId: number | undefined;
+  const handleVolume = (e: any) => {
+    setVolumeVisible(true);
+
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(() => {
+      setVolumeVisible(false);
+    }, 1000);
   };
 
   return (
@@ -383,16 +408,14 @@ function App() {
           {output.audio?.defaultPlaybackDevice && (
             <li>
               <button
-                onClick={() => {
-                  setVolumeVisible(!isVolumeVisible());
-                }}
                 class={`volume-container ${isVolumeVisible() ? 'active' : ''}`}
+                onMouseMove={handleVolume}
               >
                 <i class={`volume nf ${
                   output.audio.defaultPlaybackDevice.volume === 0
                     ? 'nf-fa-volume_xmark'
                     : output.audio.defaultPlaybackDevice.volume < 20
-                    ? 'nf-fa-volume_off'
+                    ? 'nf-fa-volume_low'
                     : output.audio.defaultPlaybackDevice.volume < 40
                     ? 'nf-fa-volume_low'
                     : 'nf-fa-volume_high'
