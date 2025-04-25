@@ -11,9 +11,9 @@ import { dropdownOptions } from './dropdownOptions';
 import { countdownOptions } from './countdownOptions';
 
 const providers = createProviderGroup({
-  cpu: { type: 'cpu', refreshInterval: 10000 },
-  gpu: { type: 'gpu', refreshInterval: 10000 },
-  memory: { type: 'memory', refreshInterval: 10000 },
+  cpu: { type: 'cpu', refreshInterval: 5000 },
+  memory: { type: 'memory', refreshInterval: 5000 },
+  gpu: { type: 'gpu', refreshInterval: 5000 },
   audio: { type: 'audio' },
   systray: { type: 'systray' },
   window: { type: 'window' },
@@ -37,6 +37,8 @@ function App() {
   const [countdown, setCountdown] = createSignal(60);
   const [countdownActive, setCountdownActive] = createSignal('');
   let countdownInteval: number | undefined;
+
+  const [isVolumeVisible, setVolumeVisible] = createSignal(false);
 
   /**
    * Renders the icons in the system tray.
@@ -343,7 +345,7 @@ function App() {
                   }}
                 >
                   <i class="nf nf-cod-chip">
-                    <span class={gpu.utilizationGpu > 85 ? 'high-usage' : ''}>
+                    <span class={gpu.utilizationGpu == 100 ? 'high-usage' : ''}>
                       {Math.round(gpu.utilizationGpu)}%
                     </span>
                   </i>
@@ -380,16 +382,28 @@ function App() {
 
           {output.audio?.defaultPlaybackDevice && (
             <li>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="2"
-                value={output.audio.defaultPlaybackDevice.volume}
-                onChange={e =>
-                  output.audio?.setVolume(e.target.valueAsNumber)
-                }
-              />
+              <i
+                class={`volume nf ${output.audio.defaultPlaybackDevice.volume === 0 
+                  ? 'nf-fa-volume_xmark' 
+                  : output.audio.defaultPlaybackDevice.volume <= 50 
+                  ? 'nf-fa-volume_low' 
+                  : 'nf-fa-volume_high'} 
+                  ${isVolumeVisible() ? 'active' : ''}`}
+                onClick={() => {
+                  setVolumeVisible(!isVolumeVisible());
+                }}
+              >
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="2"
+                  value={output.audio.defaultPlaybackDevice.volume}
+                  onInput={e =>
+                    output.audio?.setVolume(e.target.valueAsNumber)
+                  }
+                />
+              </i>
             </li>
           )}
 

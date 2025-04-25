@@ -22,7 +22,7 @@ body {
   border-bottom: 1px solid #d0d0d0;
 }
 
-i {
+.left i {
   color: rgba(128, 128, 128, 90%);
   float: right;
 }
@@ -160,4 +160,52 @@ button.updates span.badge {
 
 .high-usage {
   color: #ff0000;
+}
+
+/* Styles for input range slider to mimic MacOS Monterey volume slider */
+i.volume {
+  font-size: 18px;
+}
+
+input[type="range"] {
+  height: 15px;
+  margin-top: 3px;
+  background: transparent;
+  border-radius: 50px;
+  overflow: hidden;
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+i.volume.active input[type='range'] {
+  display: block;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 15px;
+  background: #d6d2d3;
+  border-color: #bcb9ba;
+  border-radius: 16px;
+  border: 1px solid #bcb9ba;
+}
+
+
+input[type="range"]::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -1px;
+  background: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 50%;
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: -407px 0 0 400px #ffffff;
+  transition: background 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover,
+input[type="range"]:active::-webkit-slider-thumb,
+input[type="range"]:focus::-webkit-slider-thumb {
+  background-color: #f0f0f0;
 }
