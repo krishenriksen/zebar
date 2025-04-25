@@ -8,7 +8,8 @@ use windows::Win32::{
   UI::{
     Accessibility::{SetWinEventHook, UnhookWinEvent},
     WindowsAndMessaging::{
-      GetWindowTextLengthW, GetWindowTextW, EVENT_SYSTEM_FOREGROUND, SetForegroundWindow,
+      GetWindowTextLengthW, GetWindowTextW, SetForegroundWindow,
+      EVENT_SYSTEM_FOREGROUND,
     },
   },
 };
@@ -139,7 +140,8 @@ impl Window {
       let copied_length = GetWindowTextW(hwnd, &mut buffer);
 
       if copied_length > 0 {
-        let window_title = String::from_utf16_lossy(&buffer[..copied_length as usize]);
+        let window_title =
+          String::from_utf16_lossy(&buffer[..copied_length as usize]);
 
         // Ignore events with the specific title
         if window_title.contains("Zebar") {
@@ -161,13 +163,13 @@ impl Window {
   }
 
   pub fn set_foreground_window(hwnd: isize) -> anyhow::Result<(), String> {
-      unsafe {
-          let hwnd = HWND(hwnd as *mut _); // Convert `isize` to a raw pointer
-          if SetForegroundWindow(hwnd).as_bool() {
-              Ok(())
-          } else {
-              Err("Failed to set foreground window".to_string())
-          }
+    unsafe {
+      let hwnd = HWND(hwnd as *mut _); // Convert `isize` to a raw pointer
+      if SetForegroundWindow(hwnd).as_bool() {
+        Ok(())
+      } else {
+        Err("Failed to set foreground window".to_string())
       }
-  }  
+    }
+  }
 }
