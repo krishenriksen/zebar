@@ -382,17 +382,19 @@ function App() {
 
           {output.audio?.defaultPlaybackDevice && (
             <li>
-              <i
-                class={`volume nf ${output.audio.defaultPlaybackDevice.volume === 0 
-                  ? 'nf-fa-volume_xmark' 
-                  : output.audio.defaultPlaybackDevice.volume <= 50 
-                  ? 'nf-fa-volume_low' 
-                  : 'nf-fa-volume_high'} 
-                  ${isVolumeVisible() ? 'active' : ''}`}
+              <button
                 onClick={() => {
                   setVolumeVisible(!isVolumeVisible());
                 }}
+                class={`volume-container ${isVolumeVisible() ? 'active' : ''}`}
               >
+                <i
+                  class={`volume nf ${output.audio.defaultPlaybackDevice.volume === 0
+                    ? 'nf-fa-volume_xmark'
+                    : output.audio.defaultPlaybackDevice.volume <= 50
+                    ? 'nf-fa-volume_low'
+                    : 'nf-fa-volume_high'}`}
+                ></i>
                 <input
                   type="range"
                   min="0"
@@ -403,7 +405,7 @@ function App() {
                     output.audio?.setVolume(e.target.valueAsNumber)
                   }
                 />
-              </i>
+              </button>
             </li>
           )}
 
