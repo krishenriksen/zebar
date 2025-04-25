@@ -388,13 +388,15 @@ function App() {
                 }}
                 class={`volume-container ${isVolumeVisible() ? 'active' : ''}`}
               >
-                <i
-                  class={`volume nf ${output.audio.defaultPlaybackDevice.volume === 0
+                <i class={`volume nf ${
+                  output.audio.defaultPlaybackDevice.volume === 0
                     ? 'nf-fa-volume_xmark'
-                    : output.audio.defaultPlaybackDevice.volume <= 50
+                    : output.audio.defaultPlaybackDevice.volume < 20
+                    ? 'nf-fa-volume_off'
+                    : output.audio.defaultPlaybackDevice.volume < 40
                     ? 'nf-fa-volume_low'
-                    : 'nf-fa-volume_high'}`}
-                ></i>
+                    : 'nf-fa-volume_high'
+                }`}></i>
                 <input
                   type="range"
                   min="0"

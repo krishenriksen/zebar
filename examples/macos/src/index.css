@@ -140,8 +140,7 @@ li.inline-flex:hover i {
 }
 
 .systray-icon img {
-  width: 20px;
-  height: 20px;
+  height: 19px;
   object-fit: contain;
 }
 
@@ -169,7 +168,9 @@ button.volume-container {
 }
 
 i.volume {
-  font-size: 18px;
+  font-size: 19px;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 button.volume-container.active i.volume {
