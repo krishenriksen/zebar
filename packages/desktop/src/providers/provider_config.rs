@@ -6,8 +6,9 @@ use super::{
   systray::SystrayProviderConfig, window::WindowProviderConfig,
 };
 use super::{
-  battery::BatteryProviderConfig, cpu::CpuProviderConfig, gpu::GpuProviderConfig,
-  memory::MemoryProviderConfig, network::NetworkProviderConfig,
+  battery::BatteryProviderConfig, cpu::CpuProviderConfig,
+  gpu::GpuProviderConfig, memory::MemoryProviderConfig,
+  network::NetworkProviderConfig,
 };
 
 #[derive(Deserialize, Debug)]

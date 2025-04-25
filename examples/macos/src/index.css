@@ -177,7 +177,7 @@ button.volume-container.active i.volume {
   margin-right: 8px;
 }
 
-input[type="range"] {
+input[type='range'] {
   height: 15px;
   background: transparent;
   border-radius: 50px;
@@ -193,16 +193,14 @@ button.volume-container.active input[type='range'] {
   display: inline-block;
 }
 
-input[type="range"]::-webkit-slider-runnable-track {
+input[type='range']::-webkit-slider-runnable-track {
   height: 15px;
   background: #d6d2d3;
-  border-color: #bcb9ba;
   border-radius: 16px;
   border: 1px solid #bcb9ba;
 }
 
-
-input[type="range"]::-webkit-slider-thumb {
+input[type='range']::-webkit-slider-thumb {
   width: 16px;
   height: 16px;
   margin-top: -1px;
@@ -215,8 +213,8 @@ input[type="range"]::-webkit-slider-thumb {
   transition: background 0.2s ease;
 }
 
-input[type="range"]::-webkit-slider-thumb:hover,
-input[type="range"]:active::-webkit-slider-thumb,
-input[type="range"]:focus::-webkit-slider-thumb {
+input[type='range']::-webkit-slider-thumb:hover,
+input[type='range']:active::-webkit-slider-thumb,
+input[type='range']:focus::-webkit-slider-thumb {
   background-color: #f0f0f0;
 }

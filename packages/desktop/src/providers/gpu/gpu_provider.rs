@@ -1,3 +1,4 @@
+use nvml_wrapper::Nvml;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -6,8 +7,6 @@ use crate::{
     CommonProviderState, Provider, ProviderInputMsg, RuntimeType,
   },
 };
-
-use nvml_wrapper::Nvml;
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -51,13 +50,11 @@ impl GpuProvider {
     let mut gpus_info = Vec::new();
 
     for index in 0..device_count {
-        match nvml.device_by_index(index) {
-            Ok(device) => {
-                match device.utilization_rates() {
-                    Ok(utilization) => {
-                        match device.memory_info() {
-                            Ok(memory) => {
-                                match device.temperature(nvml_wrapper::enum_wrappers::device::TemperatureSensor::Gpu) {
+      match nvml.device_by_index(index) {
+        Ok(device) => match device.utilization_rates() {
+          Ok(utilization) => match device.memory_info() {
+            Ok(memory) => {
+              match device.temperature(nvml_wrapper::enum_wrappers::device::TemperatureSensor::Gpu) {
                                     Ok(temperature) => {
                                         match device.brand() {
                                             Ok(vendor_enum) => {
@@ -76,15 +73,21 @@ impl GpuProvider {
                                     }
                                     Err(e) => eprintln!("Error getting temperature for device {}: {}", index, e),
                                 }
-                            }
-                            Err(e) => eprintln!("Error getting memory info for device {}: {}", index, e),
-                        }
-                    }
-                    Err(e) => eprintln!("Error getting utilization for device {}: {}", index, e),
-                }
             }
-            Err(e) => eprintln!("Error getting device at index {}: {}", index, e),
+            Err(e) => eprintln!(
+              "Error getting memory info for device {}: {}",
+              index, e
+            ),
+          },
+          Err(e) => eprintln!(
+            "Error getting utilization for device {}: {}",
+            index, e
+          ),
+        },
+        Err(e) => {
+          eprintln!("Error getting device at index {}: {}", index, e)
         }
+      }
     }
 
     Ok(GpuOutput { gpus: gpus_info })

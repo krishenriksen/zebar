@@ -15,10 +15,10 @@ use super::{
   window::WindowProvider,
 };
 use super::{
-  battery::BatteryProvider, cpu::CpuProvider, gpu::GpuProvider, memory::MemoryProvider,
-  network::NetworkProvider, Provider, ProviderConfig, ProviderFunction,
-  ProviderFunctionResponse, ProviderFunctionResult, ProviderOutput,
-  RuntimeType,
+  battery::BatteryProvider, cpu::CpuProvider, gpu::GpuProvider,
+  memory::MemoryProvider, network::NetworkProvider, Provider,
+  ProviderConfig, ProviderFunction, ProviderFunctionResponse,
+  ProviderFunctionResult, ProviderOutput, RuntimeType,
 };
 
 /// Common fields for a provider.
@@ -288,7 +288,7 @@ impl ProviderManager {
           ProviderConfig::Gpu(config) => {
             let mut provider = GpuProvider::new(config, common);
             provider.start_sync();
-          }          
+          }
           #[cfg(windows)]
           ProviderConfig::Media(config) => {
             let mut provider = MediaProvider::new(config, common);

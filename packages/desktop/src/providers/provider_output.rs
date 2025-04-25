@@ -6,8 +6,8 @@ use super::{
   window::WindowOutput,
 };
 use super::{
-  battery::BatteryOutput, cpu::CpuOutput, gpu::GpuOutput, memory::MemoryOutput,
-  network::NetworkOutput,
+  battery::BatteryOutput, cpu::CpuOutput, gpu::GpuOutput,
+  memory::MemoryOutput, network::NetworkOutput,
 };
 
 /// Implements `From<T>` for `ProviderOutput` for each given variant.

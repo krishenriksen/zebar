@@ -3,7 +3,7 @@ import './index.css';
 import { render } from 'solid-js/web';
 import { createStore } from 'solid-js/store';
 import { createProviderGroup } from 'zebar';
-import { createSignal, createEffect, createMemo } from 'solid-js';
+import { createSignal, createEffect, createMemo, JSX } from 'solid-js';
 
 import { performAction } from './actions';
 
@@ -34,20 +34,30 @@ export type DropdownOption = {
 };
 
 function App() {
-  createEffect(() => providers.onOutput(setOutput));
-
+  const iconCache = new Map<string, JSX.Element>();
+  const importCache = new Map<string, DropdownOption[]>();  
+  const [countdown, setCountdown] = createSignal(60);
+  const [countdownActive, setCountdownActive] = createSignal('');
+  let countdownInteval: number | undefined;
+  const [appSpecificOptions, setAppSpecificOptions] = createSignal<
+    DropdownOption[]
+  >([]);
+  const defaultTitle = 'File Explorer';
+  const replaceTitle = ['Zebar - macos/macos', 'Program Manager'];
   const [isDropdownVisible, setDropdownVisible] = createSignal(false);
-
-  /**
-   * Renders the icons in the system tray.
-   */
+  const [isVolumeVisible, setVolumeVisible] = createSignal(false);
+  let volumeInteval: number | undefined;
   type SystrayIcon = {
     id: string;
     iconUrl: string;
     tooltip: string;
   };
-  const iconCache = new Map();
 
+  createEffect(() => providers.onOutput(setOutput));
+
+  /**
+   * Renders the icons in the system tray.
+   */
   const renderIcon = (icon: SystrayIcon) => {
     if (!iconCache.has(icon.id)) {
       const li = (
@@ -68,10 +78,14 @@ function App() {
       );
       iconCache.set(icon.id, li);
     } else {
-      const cachedIcon = iconCache.get(icon.id);
-      const img = cachedIcon.querySelector('img');
-      img.src = icon.iconUrl;
-      img.title = icon.tooltip;
+      const cachedIcon = iconCache.get(icon.id) as HTMLLIElement;
+      if (cachedIcon) {
+        const img = cachedIcon.querySelector('img');
+        if (img) {
+          img.src = icon.iconUrl;
+          img.title = icon.tooltip;
+        }
+      }
     }
 
     return iconCache.get(icon.id);
@@ -114,9 +128,6 @@ function App() {
   /**
    * Countdown timer for specific actions
    */
-  const [countdown, setCountdown] = createSignal(60);
-  const [countdownActive, setCountdownActive] = createSignal('');
-  let countdownInteval: number | undefined;  
   const startCountdown = (name: string, action: () => void) => {
     if (countdownActive() === name) {
       resetCountdown();
@@ -150,13 +161,6 @@ function App() {
    * Get menu entries for specific applications
    * Dynamically import the file based on the application title
    */
-  const [appSpecificOptions, setAppSpecificOptions] = createSignal<
-    DropdownOption[]
-  >([]);
-  const importCache = new Map<string, DropdownOption[]>(); // Cache for imported modules
-  const defaultTitle = 'File Explorer';
-  const replaceTitle = ['Zebar - macos/macos', 'Program Manager'];
-
   createEffect(async () => {
     if (output.window?.title && output.window?.hwnd) {
       const sanitizedTitle = getNormalizedWindowTitle().replace(
@@ -227,19 +231,17 @@ function App() {
   /**
    * Handle volume slider visibility
    * Toggles the volume slider visibility and sets a timeout to hide it after a delay
-   * @param {MouseEvent} e - The click event
+   * @param {MouseEvent} e
    * @returns {void}
    */
-  const [isVolumeVisible, setVolumeVisible] = createSignal(false);
-  let timeoutId: number | undefined;
   const handleVolume = (e: any) => {
     setVolumeVisible(true);
 
-    if (timeoutId) {
-      clearTimeout(timeoutId);
+    if (volumeInteval) {
+      clearTimeout(volumeInteval);
     }
 
-    timeoutId = setTimeout(() => {
+    volumeInteval = setTimeout(() => {
       setVolumeVisible(false);
     }, 1000);
   };
@@ -361,49 +363,61 @@ function App() {
             </li>
           )}
 
-          {output.gpu && output.gpu.gpus && output.gpu.gpus.map((gpu: any, index: number) => (
-            <>
-              <li title={`GPU Usage (${index})`}>
-                <button
-                  onClick={() => {
-                    performAction('Start-Process taskmgr');
-                  }}
-                >
-                  <i class="nf nf-cod-chip">
-                    <span class={gpu.utilizationGpu == 100 ? 'high-usage' : ''}>
-                      {Math.round(gpu.utilizationGpu)}%
-                    </span>
-                  </i>
-                </button>
-              </li>
-              <li title={`GPU Memory Usage (${index})`}>
-                <button
-                  onClick={() => {
-                    performAction('Start-Process taskmgr');
-                  }}
-                >
-                  <i class="nf nf-md-chip">
-                    <span class={gpu.utilizationMemory > 85 ? 'high-usage' : ''}>
-                      {Math.round(gpu.utilizationMemory)}%
-                    </span>
-                  </i>
-                </button>
-              </li>
-              <li title={`GPU Temperature (${index})`}>
-                <button
-                  onClick={() => {
-                    performAction('Start-Process taskmgr');
-                  }}
-                >
-                  <i class="nf nf-fa-temperature_empty">
-                    <span class={gpu.temperature > 85 ? 'high-usage' : ''}>
-                      {gpu.temperature}
-                    </span>
-                  </i>
-                </button>
-              </li>
-            </>
-          ))}
+          {output.gpu &&
+            output.gpu.gpus &&
+            output.gpu.gpus.map((gpu: any, index: number) => (
+              <>
+                <li title={`GPU Usage (${index})`}>
+                  <button
+                    onClick={() => {
+                      performAction('Start-Process taskmgr');
+                    }}
+                  >
+                    <i class="nf nf-cod-chip">
+                      <span
+                        class={
+                          gpu.utilizationGpu == 100 ? 'high-usage' : ''
+                        }
+                      >
+                        {Math.round(gpu.utilizationGpu)}%
+                      </span>
+                    </i>
+                  </button>
+                </li>
+                <li title={`GPU Memory Usage (${index})`}>
+                  <button
+                    onClick={() => {
+                      performAction('Start-Process taskmgr');
+                    }}
+                  >
+                    <i class="nf nf-md-chip">
+                      <span
+                        class={
+                          gpu.utilizationMemory > 85 ? 'high-usage' : ''
+                        }
+                      >
+                        {Math.round(gpu.utilizationMemory)}%
+                      </span>
+                    </i>
+                  </button>
+                </li>
+                <li title={`GPU Temperature (${index})`}>
+                  <button
+                    onClick={() => {
+                      performAction('Start-Process taskmgr');
+                    }}
+                  >
+                    <i class="nf nf-fa-temperature_empty">
+                      <span
+                        class={gpu.temperature > 85 ? 'high-usage' : ''}
+                      >
+                        {gpu.temperature}
+                      </span>
+                    </i>
+                  </button>
+                </li>
+              </>
+            ))}
 
           {output.audio?.defaultPlaybackDevice && (
             <li>
@@ -411,15 +425,17 @@ function App() {
                 class={`volume-container ${isVolumeVisible() ? 'active' : ''}`}
                 onMouseMove={handleVolume}
               >
-                <i class={`volume nf ${
-                  output.audio.defaultPlaybackDevice.volume === 0
-                    ? 'nf-fa-volume_xmark'
-                    : output.audio.defaultPlaybackDevice.volume < 20
-                    ? 'nf-fa-volume_low'
-                    : output.audio.defaultPlaybackDevice.volume < 40
-                    ? 'nf-fa-volume_low'
-                    : 'nf-fa-volume_high'
-                }`}></i>
+                <i
+                  class={`volume nf ${
+                    output.audio.defaultPlaybackDevice.volume === 0
+                      ? 'nf-fa-volume_xmark'
+                      : output.audio.defaultPlaybackDevice.volume < 20
+                        ? 'nf-fa-volume_low'
+                        : output.audio.defaultPlaybackDevice.volume < 40
+                          ? 'nf-fa-volume_low'
+                          : 'nf-fa-volume_high'
+                  }`}
+                ></i>
                 <input
                   type="range"
                   min="0"
