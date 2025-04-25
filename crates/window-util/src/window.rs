@@ -9,7 +9,7 @@ use windows::Win32::{
     Accessibility::{SetWinEventHook, UnhookWinEvent},
     WindowsAndMessaging::{
       GetWindowTextLengthW, GetWindowTextW, SetForegroundWindow,
-      EVENT_SYSTEM_FOREGROUND,
+      EVENT_SYSTEM_FOREGROUND, EVENT_OBJECT_DESTROY, EVENT_OBJECT_CREATE,
     },
   },
 };
@@ -45,7 +45,7 @@ impl Window {
     // Store the sender in the static `EVENT_TX`
     *EVENT_TX.lock().unwrap() = Some(event_tx.clone());
 
-    Self::start_foreground_listener();
+    Self::start_window_event_listener();
 
     Ok(Window { event_rx, event_tx })
   }
@@ -85,81 +85,72 @@ impl Window {
     Some(event)
   }
 
-  fn start_foreground_listener() {
+  fn start_window_event_listener() {
     std::thread::spawn(move || unsafe {
-      // Set up a Windows event hook for foreground window changes
-      let hook = SetWinEventHook(
-        EVENT_SYSTEM_FOREGROUND,
-        EVENT_SYSTEM_FOREGROUND,
-        GetModuleHandleW(None).unwrap(),
-        Some(event_callback),
-        0,
-        0,
-        0,
+      let hook_foreground = SetWinEventHook(
+          EVENT_SYSTEM_FOREGROUND,
+          EVENT_SYSTEM_FOREGROUND,
+          GetModuleHandleW(None).unwrap(),
+          Some(event_callback),
+          0,
+          0,
+          0,
       );
 
-      if hook.0.is_null() {
-        eprintln!("Failed to set event hook");
-        return;
-      }
-
-      println!("Listening for foreground window changes...");
-
-      // Keep the thread alive to process messages
-      let mut msg =
-        windows::Win32::UI::WindowsAndMessaging::MSG::default();
-      while windows::Win32::UI::WindowsAndMessaging::GetMessageW(
-        &mut msg,
-        HWND(std::ptr::null_mut()),
-        0,
-        0,
-      )
-      .into()
-      {
-        let _ =
-          windows::Win32::UI::WindowsAndMessaging::TranslateMessage(&msg);
-        windows::Win32::UI::WindowsAndMessaging::DispatchMessageW(&msg);
-      }
-
-      let _ = UnhookWinEvent(hook);
-    });
-
-    // Callback function for foreground window changes
-    unsafe extern "system" fn event_callback(
-      _: windows::Win32::UI::Accessibility::HWINEVENTHOOK,
-      _: u32,
-      hwnd: HWND,
-      _: i32,
-      _: i32,
-      _: u32,
-      _: u32,
-    ) {
-      // Retrieve the window title
-      let length = GetWindowTextLengthW(hwnd) + 1;
-      let mut buffer = vec![0u16; length as usize];
-      let copied_length = GetWindowTextW(hwnd, &mut buffer);
-
-      if copied_length > 0 {
-        let window_title =
-          String::from_utf16_lossy(&buffer[..copied_length as usize]);
-
-        // Ignore events with the specific title
-        if window_title.contains("Zebar") {
-          println!("Ignored window with title: {:?}", window_title);
+      if hook_foreground.0.is_null() {
+          eprintln!("Failed to set foreground event hook");
           return;
-        }
-
-        // Access the static `EVENT_TX` to send the event
-        if let Some(sender) = EVENT_TX.lock().unwrap().as_ref() {
-          if let Err(err) = sender.send(WindowEvent {
-            hwnd: hwnd.0 as isize,
-            title: window_title,
-          }) {
-            eprintln!("Failed to send event: {}", err);
-          }
-        }
       }
-    }
+
+      /*
+      let hook_create = SetWinEventHook(
+          EVENT_OBJECT_CREATE,
+          EVENT_OBJECT_CREATE,
+          GetModuleHandleW(None).unwrap(),
+          Some(event_callback),
+          0,
+          0,
+          0,
+      );
+
+      if hook_create.0.is_null() {
+          eprintln!("Failed to set create event hook");
+          return;
+      }
+      
+      let hook_destroy = SetWinEventHook(
+          EVENT_OBJECT_DESTROY,
+          EVENT_OBJECT_DESTROY,
+          GetModuleHandleW(None).unwrap(),
+          Some(event_callback),
+          0,
+          0,
+          0,
+      );
+
+      if hook_destroy.0.is_null() {
+          eprintln!("Failed to set destroy event hook");
+          return;
+      }
+      */
+
+      println!("Listening for window events...");
+
+      let mut msg = windows::Win32::UI::WindowsAndMessaging::MSG::default();
+      while windows::Win32::UI::WindowsAndMessaging::GetMessageW(
+          &mut msg,
+          HWND(std::ptr::null_mut()),
+          0,
+          0,
+      ).into() {
+          let _ = windows::Win32::UI::WindowsAndMessaging::TranslateMessage(&msg);
+          windows::Win32::UI::WindowsAndMessaging::DispatchMessageW(&msg);
+      }
+
+      let _ = UnhookWinEvent(hook_foreground);
+      //let _ = UnhookWinEvent(hook_create);
+      //let _ = UnhookWinEvent(hook_destroy);
+    });
   }
 
   pub fn set_foreground_window(hwnd: isize) -> anyhow::Result<(), String> {
@@ -169,6 +160,43 @@ impl Window {
         Ok(())
       } else {
         Err("Failed to set foreground window".to_string())
+      }
+    }
+  }
+}
+
+// Callback function for foreground window changes
+unsafe extern "system" fn event_callback(
+  _: windows::Win32::UI::Accessibility::HWINEVENTHOOK,
+  _: u32,
+  hwnd: HWND,
+  _: i32,
+  _: i32,
+  _: u32,
+  _: u32,
+) {
+  // Retrieve the window title
+  let length = GetWindowTextLengthW(hwnd) + 1;
+  let mut buffer = vec![0u16; length as usize];
+  let copied_length = GetWindowTextW(hwnd, &mut buffer);
+
+  if copied_length > 0 {
+    let window_title =
+      String::from_utf16_lossy(&buffer[..copied_length as usize]);
+
+    // Ignore events with the specific title
+    if window_title.contains("Zebar") {
+      println!("Ignored window with title: {:?}", window_title);
+      return;
+    }
+
+    // Access the static `EVENT_TX` to send the event
+    if let Some(sender) = EVENT_TX.lock().unwrap().as_ref() {
+      if let Err(err) = sender.send(WindowEvent {
+        hwnd: hwnd.0 as isize,
+        title: window_title,
+      }) {
+        eprintln!("Failed to send event: {}", err);
       }
     }
   }
