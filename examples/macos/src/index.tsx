@@ -300,7 +300,17 @@ function App() {
 
           {!isDropdownVisible() && (
             <li class="application">
-              <button>{getNormalizedWindowTitle()}</button>
+              <button
+                onClick={() => {
+                  const hwnd = appSpecificOptions()[0]?.hwnd;
+                  const action = appSpecificOptions()[0]?.action;
+                  if (typeof action === 'function') {
+                    action(hwnd);
+                  }
+                }}
+              >
+                {getNormalizedWindowTitle()}
+              </button>
             </li>
           )}
 

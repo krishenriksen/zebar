@@ -1,13 +1,13 @@
 import { createMenuItem, performAction } from '../actions';
 
 const menuItemActions: Record<string, () => Promise<string>> = {
-  File: async () => performAction('start $HOME'),
-  Edit: async () => performAction('start $HOME'),
-  Selection: async () => performAction('start $HOME'),
-  View: async () => performAction('start $HOME'),
-  Go: async () => performAction('start $HOME'),
-  Run: async () => performAction('start $HOME'),
-  Terminal: async () => performAction('start $HOME'),
+  File: async () => performAction('code --new-window'),
+  Edit: async () => performAction('code --new-window'),
+  Selection: async () => performAction('code --new-window'),
+  View: async () => performAction('code --new-window'),
+  Go: async () => performAction('code --new-window'),
+  Run: async () => performAction('code --new-window'),
+  Terminal: async () => performAction('code --new-window'),
   Help: async () => performAction('start ms-contact-support:'),
 };
 
