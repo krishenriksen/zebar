@@ -1,11 +1,15 @@
 type LogMethod = 'log' | 'warn' | 'error';
 
+const isProductionMode = true; // Set to false to enable debug mode
+
 export function createLogger(section: string) {
   function log(
     consoleLogMethod: LogMethod,
     message: string,
     ...data: unknown[]
   ) {
+    if (isProductionMode) return; // Only log if in debug mode
+
     const date = new Date();
     const timestamp =
       `${date.getHours().toString().padStart(2, '0')}:` +

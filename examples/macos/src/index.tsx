@@ -161,6 +161,30 @@ function App() {
    * Get menu entries for specific applications
    * Dynamically import the file based on the application title
    */
+  const getNormalizedWindowTitle = () => {
+    if (output.window?.title) {
+      if (replaceTitle.includes(output.window.title)) {
+        return defaultTitle;
+      }
+
+      // Replace en-dash and em-dash with space-hyphen-space
+      const processedTitle = output.window.title
+        .replace(' – ', ' - ') // En-dash
+        .replace(' — ', ' - '); // Em-dash
+
+      // Extract the last part of the title or fallback to the full title
+      return (
+        processedTitle
+          .split(' - ')
+          .filter(s => s.trim() !== '')
+          .pop()
+          ?.trim() || defaultTitle
+      );
+    }
+
+    return defaultTitle;
+  };
+
   createEffect(async () => {
     if (output.window?.title && output.window?.hwnd) {
       const sanitizedTitle = getNormalizedWindowTitle().replace(
@@ -191,42 +215,6 @@ function App() {
       }
     }
   });
-
-  const getNormalizedTitle = (
-    fullTitle: string,
-    defaultTitle: string,
-    replaceTitle: string | any[],
-  ) => {
-    if (replaceTitle.includes(fullTitle)) {
-      return defaultTitle;
-    }
-
-    // Replace en-dash and em-dash with space-hyphen-space
-    const processedTitle = fullTitle
-      .replace(' – ', ' - ') // En-dash
-      .replace(' — ', ' - '); // Em-dash
-
-    // Extract the last part of the title or fallback to the full title
-    return (
-      processedTitle
-        .split(' - ')
-        .filter(s => s.trim() !== '')
-        .pop()
-        ?.trim() || defaultTitle
-    );
-  };
-
-  const getNormalizedWindowTitle = () => {
-    if (output.window?.title) {
-      return getNormalizedTitle(
-        output.window.title,
-        defaultTitle,
-        replaceTitle,
-      );
-    }
-
-    return defaultTitle;
-  };
 
   /**
    * Handle volume slider visibility

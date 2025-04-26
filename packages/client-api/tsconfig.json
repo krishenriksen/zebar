@@ -5,7 +5,8 @@
     "composite": false,
     "paths": {
       "~/*": ["./src/*"]
-    }
+    },
+    "lib": ["ES2023", "DOM"] // Ensure promise support and DOM types
   },
   "exclude": ["dist"]
 }
