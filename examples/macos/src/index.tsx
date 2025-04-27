@@ -10,6 +10,14 @@ import { performAction } from './actions';
 import { dropdownOptions } from './dropdownOptions';
 import { countdownOptions } from './countdownOptions';
 
+// Use Vite's import.meta.glob to import all files dynamically
+const modules = import.meta.glob('./applications/*.ts', { eager: true });
+const Applications: Record<string, any> = {};
+Object.keys(modules).forEach((filePath) => {
+  const moduleName = filePath.replace(/.*\/(.*)\.ts$/, '$1');
+  Applications[moduleName] = modules[filePath];
+});
+
 /*
   cpu: { type: 'cpu', refreshInterval: 5000 },
   memory: { type: 'memory', refreshInterval: 5000 },
@@ -38,14 +46,18 @@ function App() {
     id: string;
     iconUrl: string;
     tooltip: string;
-  };  
+  };
   const iconCache = new Map<string, JSX.Element>();
 
   const [countdown, setCountdown] = createSignal(60);
   const [countdownActive, setCountdownActive] = createSignal('');
   let countdownInteval: number | undefined;
 
-  const importCache = new Map<string, DropdownOption[]>();  
+  type ModuleType = {
+    titles: string[];
+    menuItems: DropdownOption[];
+  };
+  const [title, setTitle] = createSignal<string[]>([]);
   const [appSpecificOptions, setAppSpecificOptions] = createSignal<
     DropdownOption[]
   >([]);
@@ -61,44 +73,12 @@ function App() {
   /**
    * Renders the icons in the system tray.
    */
-  const renderIcon = (icon: SystrayIcon) => {
-    if (iconCache.has(icon.id)) {
-      const cachedIcon = iconCache.get(icon.id) as HTMLLIElement;
-      if (cachedIcon) {
-        const img = cachedIcon.querySelector('img');
-        if (img) {
-          img.src = icon.iconUrl;
-          img.title = icon.tooltip;
-        }
-      }
-    } else {
-      const li = (
-        <li
-          id={icon.id}
-          class="systray-icon"
-          onClick={e => {
-            e.preventDefault();
-            output.systray?.onLeftClick(icon.id);
-          }}
-          onContextMenu={e => {
-            e.preventDefault();
-            output.systray?.onRightClick(icon.id);
-          }}
-        >
-          <img src={icon.iconUrl} title={icon.tooltip} />
-        </li>
-      );
-
-      iconCache.set(icon.id, li);
-    }
-
-    return iconCache.get(icon.id);
-  };
-
   const SystrayIcons = createMemo(() => {
     if (output.systray) {
       // remove icons that are not in the current output
-      const currentIds = new Set(output.systray.icons.map((icon: { id: any; }) => icon.id));
+      const currentIds = new Set(
+        output.systray.icons.map((icon: { id: any }) => icon.id),
+      );
       iconCache.forEach((_, id) => {
         if (!currentIds.has(id)) {
           iconCache.delete(id);
@@ -120,7 +100,39 @@ function App() {
 
           return getPriority(a) - getPriority(b);
         })
-        .map((icon: SystrayIcon) => renderIcon(icon));
+        .map((icon: SystrayIcon) => {
+          if (iconCache.has(icon.id)) {
+            const cachedIcon = iconCache.get(icon.id) as HTMLLIElement;
+            if (cachedIcon) {
+              const img = cachedIcon.querySelector('img');
+              if (img) {
+                img.src = icon.iconUrl;
+                img.title = icon.tooltip;
+              }
+            }
+          } else {
+            const li = (
+              <li
+                id={icon.id}
+                class="systray-icon"
+                onClick={e => {
+                  e.preventDefault();
+                  output.systray?.onLeftClick(icon.id);
+                }}
+                onContextMenu={e => {
+                  e.preventDefault();
+                  output.systray?.onRightClick(icon.id);
+                }}
+              >
+                <img src={icon.iconUrl} title={icon.tooltip} />
+              </li>
+            );
+
+            iconCache.set(icon.id, li);
+          }
+
+          return iconCache.get(icon.id);
+        });
     }
 
     return null;
@@ -162,58 +174,44 @@ function App() {
    * Get menu entries for specific applications
    * Dynamically import the file based on the application title
    */
-  const getNormalizedWindowTitle = () => {
-    if (output.window?.title) {
-      if (replaceTitle.includes(output.window.title)) {
-        return defaultTitle;
-      }
+  createEffect(async () => {
+    let title = output.window?.title;
 
-      // Replace en-dash and em-dash with space-hyphen-space
-      const processedTitle = output.window.title
-        .replace(' – ', ' - ') // En-dash
-        .replace(' — ', ' - '); // Em-dash
+    if (title && output.window?.hwnd) {
+      if (replaceTitle.includes(title)) {
+        title = defaultTitle;
+      }
 
       // Extract the last part of the title or fallback to the full title
-      return (
-        processedTitle
-          .split(' - ')
-          .filter(s => s.trim() !== '')
-          .pop()
-          ?.trim() || defaultTitle
-      );
-    }
+      const sanitizedTitle = title
+        .replace(' – ', ' - ') // En-dash
+        .replace(' — ', ' - ') // Em-dash
+        .split(' - ')
+        .filter((s: string) => s.trim() !== '')
+        .pop()
+        ?.trim();
 
-    return defaultTitle;
-  };
-
-  createEffect(async () => {
-    if (output.window?.title && output.window?.hwnd) {
-      const sanitizedTitle = getNormalizedWindowTitle().replace(
-        /\s+/g,
-        '',
-      );
       const hwnd = parseInt(output.window.hwnd);
 
-      if (importCache.has(sanitizedTitle)) {
-        // Use cached module if available
-        const cachedOptions = importCache.get(sanitizedTitle) ?? [];
-        setAppSpecificOptions(cachedOptions);
-      } else {
-        try {
-          const module = await import(
-            `./applications/${sanitizedTitle}.ts`
-          );
-          const options = module.menuItems.map((item: any) => ({
-            ...item,
-            hwnd,
-          }));
-          importCache.set(sanitizedTitle, options); // Cache the imported module
-          setAppSpecificOptions(options);
-        } catch (err) {
-          //console.log(`No specific options for ${sanitizedTitle}`);
-          setAppSpecificOptions([]);
+      let matchedModule: any = null;
+
+      Object.values(Applications).forEach((module: ModuleType) => {
+        if (module.titles.includes(sanitizedTitle)) {
+          matchedModule = module;
         }
+      });
+
+      let options = { menuItems: [], title: sanitizedTitle };
+
+      if (matchedModule) {
+        options = {
+          menuItems: matchedModule.menuItems.map((item: DropdownOption) => ({ ...item, hwnd })),
+          title: matchedModule.titles[0]
+        };
       }
+
+      setAppSpecificOptions(options.menuItems);
+      setTitle([options.title || defaultTitle]);
     }
   });
 
@@ -310,7 +308,7 @@ function App() {
                   }
                 }}
               >
-                {getNormalizedWindowTitle()}
+                {title()?.length ? title() : defaultTitle}
               </button>
             </li>
           )}
