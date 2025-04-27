@@ -34,24 +34,27 @@ export type DropdownOption = {
 };
 
 function App() {
+  type SystrayIcon = {
+    id: string;
+    iconUrl: string;
+    tooltip: string;
+  };  
   const iconCache = new Map<string, JSX.Element>();
-  const importCache = new Map<string, DropdownOption[]>();  
+
   const [countdown, setCountdown] = createSignal(60);
   const [countdownActive, setCountdownActive] = createSignal('');
   let countdownInteval: number | undefined;
+
+  const importCache = new Map<string, DropdownOption[]>();  
   const [appSpecificOptions, setAppSpecificOptions] = createSignal<
     DropdownOption[]
   >([]);
   const defaultTitle = 'File Explorer';
   const replaceTitle = ['Zebar - macos/macos', 'Program Manager'];
+
   const [isDropdownVisible, setDropdownVisible] = createSignal(false);
   const [isVolumeVisible, setVolumeVisible] = createSignal(false);
   let volumeInteval: number | undefined;
-  type SystrayIcon = {
-    id: string;
-    iconUrl: string;
-    tooltip: string;
-  };
 
   createEffect(() => providers.onOutput(setOutput));
 
@@ -59,7 +62,16 @@ function App() {
    * Renders the icons in the system tray.
    */
   const renderIcon = (icon: SystrayIcon) => {
-    if (!iconCache.has(icon.id)) {
+    if (iconCache.has(icon.id)) {
+      const cachedIcon = iconCache.get(icon.id) as HTMLLIElement;
+      if (cachedIcon) {
+        const img = cachedIcon.querySelector('img');
+        if (img) {
+          img.src = icon.iconUrl;
+          img.title = icon.tooltip;
+        }
+      }
+    } else {
       const li = (
         <li
           id={icon.id}
@@ -76,33 +88,22 @@ function App() {
           <img src={icon.iconUrl} title={icon.tooltip} />
         </li>
       );
+
       iconCache.set(icon.id, li);
-    } else {
-      const cachedIcon = iconCache.get(icon.id) as HTMLLIElement;
-      if (cachedIcon) {
-        const img = cachedIcon.querySelector('img');
-        if (img) {
-          img.src = icon.iconUrl;
-          img.title = icon.tooltip;
-        }
-      }
     }
 
     return iconCache.get(icon.id);
   };
 
-  const updateCache = (icons: SystrayIcon[]) => {
-    const currentIds = new Set(icons.map(icon => icon.id));
-    iconCache.forEach((_, id) => {
-      if (!currentIds.has(id)) {
-        iconCache.delete(id);
-      }
-    });
-  };
-
   const SystrayIcons = createMemo(() => {
     if (output.systray) {
-      updateCache(output.systray.icons);
+      // remove icons that are not in the current output
+      const currentIds = new Set(output.systray.icons.map((icon: { id: any; }) => icon.id));
+      iconCache.forEach((_, id) => {
+        if (!currentIds.has(id)) {
+          iconCache.delete(id);
+        }
+      });
 
       return output.systray.icons
         .filter(

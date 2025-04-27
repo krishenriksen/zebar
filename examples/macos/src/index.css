@@ -132,13 +132,6 @@ button:not(.updates):not(.volume-container.active):hover,
   border-radius: 4px;
 }
 
-li.inline-flex button:not(.updates):hover,
-li.inline-flex:hover i {
-  color: #ffffff;
-  background-color: #007aff;
-  text-shadow: 0 0.5px 1px rgba(255, 255, 255, 0.25);
-}
-
 .systray-icon img {
   height: 19px;
   object-fit: contain;
