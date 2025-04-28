@@ -14,10 +14,10 @@ export const titles = [
 ];
 
 const menuItemActions: Record<string, () => Promise<string>> = {
-  Shell: async () => performAction('Start-Process pwsh'),
-  Edit: async () => performAction('Start-Process notepad'),
-  View: async () => performAction('Start-Process notepad'),
-  Window: async () => performAction('Start-Process pwsh'),
+  Shell: async () => performAction('start pwsh'),
+  Edit: async () => performAction('start notepad'),
+  View: async () => performAction('start notepad'),
+  Window: async () => performAction('start pwsh'),
   Help: async () => performAction('start ms-contact-support:'),
 };
 

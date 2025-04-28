@@ -7,10 +7,10 @@ export const titles = [
 
 const menuItemActions: Record<string, () => Promise<string>> = {
   File: async () => performAction('start $HOME'),
-  Edit: async () => performAction('Start-Process notepad'),
-  View: async () => performAction('Start-Process notepad'),
+  Edit: async () => performAction('start notepad'),
+  View: async () => performAction('start notepad'),
   Go: async () => performAction('start $HOME'),
-  Window: async () => performAction('Start-Process pwsh'),
+  Window: async () => performAction('start pwsh'),
   Help: async () => performAction('start ms-contact-support:'),
 };
 

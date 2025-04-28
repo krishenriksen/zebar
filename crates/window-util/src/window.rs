@@ -1,18 +1,19 @@
-use std::sync::Mutex;
-
-use lazy_static::lazy_static;
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use windows::Win32::{
-  Foundation::HWND,
+  Foundation::{HWND},
   System::LibraryLoader::GetModuleHandleW,
+  Graphics::Gdi::{BeginPaint, EndPaint, TextOutW, PAINTSTRUCT},
   UI::{
-    Accessibility::{SetWinEventHook, UnhookWinEvent},
-    WindowsAndMessaging::{
-      GetWindowTextLengthW, GetWindowTextW, SetForegroundWindow,
-      EVENT_SYSTEM_FOREGROUND, EVENT_OBJECT_DESTROY, EVENT_OBJECT_CREATE,
-    },
+      Accessibility::{SetWinEventHook, UnhookWinEvent},
+      WindowsAndMessaging::{
+          GetWindowTextLengthW, GetWindowTextW, SetForegroundWindow,
+          EVENT_SYSTEM_FOREGROUND, MSG, GetMessageW, TranslateMessage, DispatchMessageW,
+      },
   },
 };
+
+use std::sync::Mutex;
+use lazy_static::lazy_static;
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 /// Represents a foreground window event.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -21,10 +22,6 @@ pub struct WindowEvent {
   pub title: String,
 }
 
-/// A system tray manager.
-///
-/// Manages a collection of `WindowIcon`s and allows sending actions
-/// to them.
 #[derive(Debug)]
 pub struct Window {
   event_rx: UnboundedReceiver<WindowEvent>,
@@ -79,8 +76,13 @@ impl Window {
       return None;
     }
 
-    // Example: Log the event
-    println!("Processed foreground window event: {:?}", event);
+    // Integrate window styling functionality
+    /*
+    let hwnd = HWND(event.hwnd as *mut _);
+    if let Err(err) = move_window_icons_left(hwnd) {
+        eprintln!("Error modifying window style: {}", err);
+    }
+    */
 
     Some(event)
   }
@@ -102,49 +104,12 @@ impl Window {
           return;
       }
 
-      /*
-      let hook_create = SetWinEventHook(
-          EVENT_OBJECT_CREATE,
-          EVENT_OBJECT_CREATE,
-          GetModuleHandleW(None).unwrap(),
-          Some(event_callback),
-          0,
-          0,
-          0,
-      );
-
-      if hook_create.0.is_null() {
-          eprintln!("Failed to set create event hook");
-          return;
-      }
-      
-      let hook_destroy = SetWinEventHook(
-          EVENT_OBJECT_DESTROY,
-          EVENT_OBJECT_DESTROY,
-          GetModuleHandleW(None).unwrap(),
-          Some(event_callback),
-          0,
-          0,
-          0,
-      );
-
-      if hook_destroy.0.is_null() {
-          eprintln!("Failed to set destroy event hook");
-          return;
-      }
-      */
-
       println!("Listening for window events...");
 
-      let mut msg = windows::Win32::UI::WindowsAndMessaging::MSG::default();
-      while windows::Win32::UI::WindowsAndMessaging::GetMessageW(
-          &mut msg,
-          HWND(std::ptr::null_mut()),
-          0,
-          0,
-      ).into() {
-          let _ = windows::Win32::UI::WindowsAndMessaging::TranslateMessage(&msg);
-          windows::Win32::UI::WindowsAndMessaging::DispatchMessageW(&msg);
+      let mut msg = MSG::default();
+      while GetMessageW(&mut msg, HWND(std::ptr::null_mut()), 0, 0).into() {
+          let _ = TranslateMessage(&msg);
+          DispatchMessageW(&msg);
       }
 
       let _ = UnhookWinEvent(hook_foreground);
@@ -162,6 +127,25 @@ impl Window {
         Err("Failed to set foreground window".to_string())
       }
     }
+  }
+}
+
+fn move_window_icons_left(hwnd: HWND) -> Result<(), String> {
+  unsafe {
+      let mut ps = PAINTSTRUCT::default();
+      let hdc = BeginPaint(hwnd, &mut ps);
+      
+      if hdc.0 == std::ptr::null_mut() {
+          return Err("Failed to get device context for drawing.".to_string());
+      }
+
+      let text = "Custom Icons Placement\0".encode_utf16().collect::<Vec<u16>>();
+      // Correct method call with slice
+      let _ = TextOutW(hdc, 50, 50, &text);
+
+      let _ = EndPaint(hwnd, &ps);
+
+      Ok(())
   }
 }
 

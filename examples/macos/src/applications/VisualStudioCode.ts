@@ -10,8 +10,8 @@ const menuItemActions: Record<string, () => Promise<string>> = {
   Selection: async () => performAction('code --new-window'),
   View: async () => performAction('code --new-window'),
   Go: async () => performAction('start $HOME'),
-  Run: async () => performAction('Start-Process pwsh'),
-  Terminal: async () => performAction('Start-Process pwsh'),
+  Run: async () => performAction('start pwsh'),
+  Terminal: async () => performAction('start pwsh'),
   Help: async () => performAction('start ms-contact-support:'),
 };
 
