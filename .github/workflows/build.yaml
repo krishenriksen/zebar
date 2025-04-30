@@ -43,11 +43,6 @@ jobs:
         with:
           shared-key: ${{ matrix.tauri-target }}-${{ hashFiles('Cargo.lock') }}
 
-      - name: Install dependencies (Windows)
-        if: matrix.platform == 'windows-latest'
-        run: |
-          dotnet tool install --global AzureSignTool --version 5.0.0
-
       - run: pnpm i
       - run: pnpm run --filter zebar --filter @zebar/settings-ui build
 
@@ -62,11 +57,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         id: tauri
         env:
-          AZ_VAULT_URL: ${{ secrets.AZ_VAULT_URL }}
-          AZ_CERT_NAME: ${{ secrets.AZ_CERT_NAME }}
-          AZ_CLIENT_ID: ${{ secrets.AZ_CLIENT_ID }}
-          AZ_CLIENT_SECRET: ${{ secrets.AZ_CLIENT_SECRET }}
-          AZ_TENANT_ID: ${{ secrets.AZ_TENANT_ID }}
           RFC3161_TIMESTAMP_URL: ${{ vars.RFC3161_TIMESTAMP_URL }}
           VERSION_NUMBER: ${{ inputs.version-number || '0.0.0' }}
         with:

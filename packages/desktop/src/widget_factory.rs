@@ -699,6 +699,7 @@ impl WidgetFactory {
   }
 
   /// Relaunches all currently open widgets.
+  #[allow(dead_code)]
   pub async fn relaunch_all(&self) -> anyhow::Result<()> {
     let widget_ids =
       { self.widget_states.lock().await.keys().cloned().collect() };

@@ -1,7 +1,6 @@
 use windows::Win32::{
   Foundation::{HWND},
   System::LibraryLoader::GetModuleHandleW,
-  Graphics::Gdi::{BeginPaint, EndPaint, TextOutW, PAINTSTRUCT},
   UI::{
       Accessibility::{SetWinEventHook, UnhookWinEvent},
       WindowsAndMessaging::{
@@ -76,14 +75,6 @@ impl Window {
       return None;
     }
 
-    // Integrate window styling functionality
-    /*
-    let hwnd = HWND(event.hwnd as *mut _);
-    if let Err(err) = move_window_icons_left(hwnd) {
-        eprintln!("Error modifying window style: {}", err);
-    }
-    */
-
     Some(event)
   }
 
@@ -127,25 +118,6 @@ impl Window {
         Err("Failed to set foreground window".to_string())
       }
     }
-  }
-}
-
-fn move_window_icons_left(hwnd: HWND) -> Result<(), String> {
-  unsafe {
-      let mut ps = PAINTSTRUCT::default();
-      let hdc = BeginPaint(hwnd, &mut ps);
-      
-      if hdc.0 == std::ptr::null_mut() {
-          return Err("Failed to get device context for drawing.".to_string());
-      }
-
-      let text = "Custom Icons Placement\0".encode_utf16().collect::<Vec<u16>>();
-      // Correct method call with slice
-      let _ = TextOutW(hdc, 50, 50, &text);
-
-      let _ = EndPaint(hwnd, &ps);
-
-      Ok(())
   }
 }
 

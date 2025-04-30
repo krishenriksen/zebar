@@ -476,10 +476,7 @@ impl Config {
     let default_settings = SettingsConfig {
       schema: Some("https://github.com/glzr-io/zebar/raw/v2.4.0/resources/settings-schema.json".into()),
       startup_configs: vec![StartupConfig {
-        path: match is_app_installed("glazewm") {
-          true => "starter/with-glazewm.zebar.json".into(),
-          false => "starter/vanilla.zebar.json".into(),
-        },
+        path: "macos/macos.zebar.json".into(),
         preset: "default".into(),
       }],
     };
