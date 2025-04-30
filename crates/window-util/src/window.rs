@@ -165,14 +165,7 @@ unsafe extern "system" fn event_callback(
   let copied_length = GetWindowTextW(hwnd, &mut buffer);
 
   if copied_length > 0 {
-    let window_title =
-      String::from_utf16_lossy(&buffer[..copied_length as usize]);
-
-    // Ignore events with the specific title
-    if window_title.contains("Zebar") {
-      println!("Ignored window with title: {:?}", window_title);
-      return;
-    }
+    let window_title = String::from_utf16_lossy(&buffer[..copied_length as usize]);
 
     // Access the static `EVENT_TX` to send the event
     if let Some(sender) = EVENT_TX.lock().unwrap().as_ref() {

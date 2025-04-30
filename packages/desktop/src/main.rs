@@ -220,7 +220,7 @@ fn listen_events(
   let mut widget_open_rx = widget_factory.open_tx.subscribe();
   let mut widget_close_rx = widget_factory.close_tx.subscribe();
   let mut settings_change_rx = config.settings_change_tx.subscribe();
-  let mut monitors_change_rx = monitor_state.change_tx.subscribe();
+  //let mut monitors_change_rx = monitor_state.change_tx.subscribe();
   let mut widget_configs_change_rx =
     config.widget_configs_change_tx.subscribe();
 
@@ -250,6 +250,7 @@ fn listen_events(
           }
           Ok(())
         },
+        /*
         Ok(_) = monitors_change_rx.recv() => {
           info!("Monitors changed.");
           if let Err(e) = widget_factory.relaunch_all().await {
@@ -257,6 +258,7 @@ fn listen_events(
           }
           Ok(())
         },
+        */
         Ok(changed_configs) = widget_configs_change_rx.recv() => {
           info!("Widget configs changed.");
           if let Err(e) = widget_factory.relaunch_by_paths(&changed_configs.keys().cloned().collect()).await {
