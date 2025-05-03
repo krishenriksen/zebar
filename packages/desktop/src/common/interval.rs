@@ -24,9 +24,7 @@ impl SyncInterval {
       // Emit immediately on the first tick.
       self.is_first = false;
       crossbeam::channel::after(Duration::from_secs(0))
-    } else if let Some(wait_duration) =
-      self.next_tick.checked_duration_since(Instant::now())
-    {
+    } else if let Some(wait_duration) = self.next_tick.checked_duration_since(Instant::now()) {
       // Wait normally until the next tick.
       let timer = crossbeam::channel::after(wait_duration);
       self.next_tick += self.interval;

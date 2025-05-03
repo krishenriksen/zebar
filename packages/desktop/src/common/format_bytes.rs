@@ -1,8 +1,6 @@
-const SI_UNITS: [&'static str; 9] =
-  ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+const SI_UNITS: [&'static str; 9] = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
 
-const IEC_UNITS: [&'static str; 9] =
-  ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
+const IEC_UNITS: [&'static str; 9] = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
 
 /// Converts a byte value to its SI (decimal) representation.
 ///

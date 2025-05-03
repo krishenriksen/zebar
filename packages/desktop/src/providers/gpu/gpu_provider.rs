@@ -3,9 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
   common::SyncInterval,
-  providers::{
-    CommonProviderState, Provider, ProviderInputMsg, RuntimeType,
-  },
+  providers::{CommonProviderState, Provider, ProviderInputMsg, RuntimeType},
 };
 
 #[derive(Deserialize, Debug)]
@@ -37,10 +35,7 @@ pub struct GpuProvider {
 }
 
 impl GpuProvider {
-  pub fn new(
-    config: GpuProviderConfig,
-    common: CommonProviderState,
-  ) -> GpuProvider {
+  pub fn new(config: GpuProviderConfig, common: CommonProviderState) -> GpuProvider {
     GpuProvider { config, common }
   }
 
@@ -54,35 +49,28 @@ impl GpuProvider {
         Ok(device) => match device.utilization_rates() {
           Ok(utilization) => match device.memory_info() {
             Ok(memory) => {
-              match device.temperature(nvml_wrapper::enum_wrappers::device::TemperatureSensor::Gpu) {
-                                    Ok(temperature) => {
-                                        match device.brand() {
-                                            Ok(vendor_enum) => {
-                                                let vendor_string = format!("{:?}", vendor_enum);
-                                                gpus_info.push(GpuInfo {
-                                                    utilization_gpu: utilization.gpu,
-                                                    utilization_memory: utilization.memory,
-                                                    total_memory: memory.total,
-                                                    free_memory: memory.free,
-                                                    temperature,
-                                                    vendor: vendor_string,
-                                                });
-                                            }
-                                            Err(e) => eprintln!("Error getting brand for device {}: {}", index, e),
-                                        }
-                                    }
-                                    Err(e) => eprintln!("Error getting temperature for device {}: {}", index, e),
-                                }
+              match device.temperature(nvml_wrapper::enum_wrappers::device::TemperatureSensor::Gpu)
+              {
+                Ok(temperature) => match device.brand() {
+                  Ok(vendor_enum) => {
+                    let vendor_string = format!("{:?}", vendor_enum);
+                    gpus_info.push(GpuInfo {
+                      utilization_gpu: utilization.gpu,
+                      utilization_memory: utilization.memory,
+                      total_memory: memory.total,
+                      free_memory: memory.free,
+                      temperature,
+                      vendor: vendor_string,
+                    });
+                  }
+                  Err(e) => eprintln!("Error getting brand for device {}: {}", index, e),
+                },
+                Err(e) => eprintln!("Error getting temperature for device {}: {}", index, e),
+              }
             }
-            Err(e) => eprintln!(
-              "Error getting memory info for device {}: {}",
-              index, e
-            ),
+            Err(e) => eprintln!("Error getting memory info for device {}: {}", index, e),
           },
-          Err(e) => eprintln!(
-            "Error getting utilization for device {}: {}",
-            index, e
-          ),
+          Err(e) => eprintln!("Error getting utilization for device {}: {}", index, e),
         },
         Err(e) => {
           eprintln!("Error getting device at index {}: {}", index, e)

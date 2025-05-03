@@ -20,9 +20,7 @@ pub enum LengthUnit {
 impl LengthValue {
   pub fn to_px(&self, total_px: i32) -> i32 {
     match self.unit {
-      LengthUnit::Percentage => {
-        (self.amount / 100. * total_px as f32) as i32
-      }
+      LengthUnit::Percentage => (self.amount / 100. * total_px as f32) as i32,
       LengthUnit::Pixel => self.amount as i32,
     }
   }

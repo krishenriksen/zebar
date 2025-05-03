@@ -30,16 +30,8 @@ impl<R: Runtime> WindowExtWindows for Window<R> {
     // preserved unless fully overwriting the extended window style.
     unsafe {
       match enable {
-        true => SetWindowLongPtrW(
-          handle,
-          GWL_EXSTYLE,
-          WS_EX_TOOLWINDOW.0 as isize,
-        ),
-        false => SetWindowLongPtrW(
-          handle,
-          GWL_EXSTYLE,
-          WS_EX_APPWINDOW.0 as isize,
-        ),
+        true => SetWindowLongPtrW(handle, GWL_EXSTYLE, WS_EX_TOOLWINDOW.0 as isize),
+        false => SetWindowLongPtrW(handle, GWL_EXSTYLE, WS_EX_APPWINDOW.0 as isize),
       }
     };
 

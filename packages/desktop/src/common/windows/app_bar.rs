@@ -7,12 +7,12 @@ use windows::Win32::{
   Foundation::{GetLastError, HWND, LPARAM, LRESULT, RECT, WPARAM},
   UI::{
     Shell::{
-      SHAppBarMessage, ABE_BOTTOM, ABE_LEFT, ABE_RIGHT, ABE_TOP, ABM_NEW,
-      ABM_QUERYPOS, ABM_REMOVE, ABM_SETPOS, ABN_POSCHANGED, APPBARDATA,
+      SHAppBarMessage, ABE_BOTTOM, ABE_LEFT, ABE_RIGHT, ABE_TOP, ABM_NEW, ABM_QUERYPOS, ABM_REMOVE,
+      ABM_SETPOS, ABN_POSCHANGED, APPBARDATA,
     },
     WindowsAndMessaging::{
-      CallWindowProcA, DefWindowProcA, GetWindowRect,
-      RegisterWindowMessageA, SetWindowLongPtrA, GWLP_WNDPROC, WNDPROC,
+      CallWindowProcA, DefWindowProcA, GetWindowRect, RegisterWindowMessageA, SetWindowLongPtrA,
+      GWLP_WNDPROC, WNDPROC,
     },
   },
 };
@@ -42,7 +42,7 @@ unsafe extern "system" fn new_wnd_proc(
         #[allow(static_mut_refs)]
         let edge = unsafe { DOCK_EDGE.clone() };
         if let Some(edge) = edge {
-          if let Err(e) = update_app_bar_position(hwnd, edge) {
+          if let Err(e) = update_app_bar_position(hwnd, Some(edge)) {
             eprintln!("Error updating app bar position: {}", e);
           }
         }
@@ -65,10 +65,8 @@ unsafe extern "system" fn new_wnd_proc(
   }
 }
 
-fn update_app_bar_position(
-  hwnd: HWND,
-  edge: DockEdge,
-) -> anyhow::Result<()> {
+pub fn update_app_bar_position(hwnd: HWND, edge: Option<DockEdge>) -> anyhow::Result<()> {
+  let edge = edge.unwrap_or(DockEdge::Top);
   let mut rect = RECT::default();
 
   unsafe {
@@ -77,8 +75,7 @@ fn update_app_bar_position(
     }
   }
 
-  let size =
-    PhysicalSize::new(rect.right - rect.left, rect.bottom - rect.top);
+  let size = PhysicalSize::new(rect.right - rect.left, rect.bottom - rect.top);
   let position = PhysicalPosition::new(rect.left, rect.top);
 
   let mut data = APPBARDATA {
@@ -134,8 +131,7 @@ pub fn create_app_bar(
   info!("Creating app bar with initial rect: {:?}", rect);
 
   unsafe {
-    CALLBACK_MESSAGE =
-      RegisterWindowMessageA(windows::core::s!("AppBarMessage"));
+    CALLBACK_MESSAGE = RegisterWindowMessageA(windows::core::s!("AppBarMessage"));
     if CALLBACK_MESSAGE == 0 {
       bail!("Failed to register window message: {:?}", GetLastError());
     }
@@ -168,11 +164,7 @@ pub fn create_app_bar(
   // proc.
   unsafe {
     let hwnd = HWND(window_handle as _);
-    let prev_wnd_proc = SetWindowLongPtrA(
-      hwnd,
-      GWLP_WNDPROC,
-      new_wnd_proc as *const () as isize,
-    );
+    let prev_wnd_proc = SetWindowLongPtrA(hwnd, GWLP_WNDPROC, new_wnd_proc as *const () as isize);
     if prev_wnd_proc != 0 {
       PREV_WND_PROC = Some(transmute(prev_wnd_proc));
     } else {
@@ -203,10 +195,7 @@ pub fn create_app_bar(
   // Size has changed if the edge that is not being docked has been
   // adjusted by ABM_QUERYPOS. For example, if the top edge is docked, then
   // diffs in the left and right edges are the size changes.
-  let adjusted_size = PhysicalSize::new(
-    size.width - width_delta,
-    size.height - height_delta,
-  );
+  let adjusted_size = PhysicalSize::new(size.width - width_delta, size.height - height_delta);
 
   data.rc = RECT {
     left: adjusted_position.x,

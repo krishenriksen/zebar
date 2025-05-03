@@ -37,14 +37,9 @@ impl MonitorState {
   pub fn new(app_handle: &AppHandle) -> Self {
     let (change_tx, _change_rx) = broadcast::channel(16);
 
-    let monitors =
-      Arc::new(RwLock::new(Self::available_monitors(app_handle)));
+    let monitors = Arc::new(RwLock::new(Self::available_monitors(app_handle)));
 
-    Self::listen_changes(
-      app_handle.clone(),
-      monitors.clone(),
-      change_tx.clone(),
-    );
+    Self::listen_changes(app_handle.clone(), monitors.clone(), change_tx.clone());
 
     Self {
       monitors,
@@ -65,8 +60,7 @@ impl MonitorState {
     task::spawn(async move {
       let mut interval = tokio::time::interval(Duration::from_secs(4));
 
-      interval
-        .set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+      interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
       loop {
         interval.tick().await;
@@ -130,16 +124,12 @@ impl MonitorState {
   pub fn output_str(&self) -> anyhow::Result<String> {
     let monitors = self.monitors.try_read()?;
 
-    let monitors_str =
-      serde_json::to_string::<Vec<Monitor>>(monitors.as_ref())?;
+    let monitors_str = serde_json::to_string::<Vec<Monitor>>(monitors.as_ref())?;
 
     Ok(monitors_str)
   }
 
-  pub async fn monitors_by_selection(
-    &self,
-    monitor_selection: &MonitorSelection,
-  ) -> Vec<Monitor> {
+  pub async fn monitors_by_selection(&self, monitor_selection: &MonitorSelection) -> Vec<Monitor> {
     let monitors = self.monitors.read().await.clone();
 
     match monitor_selection {
@@ -152,9 +142,7 @@ impl MonitorState {
         .into_iter()
         .filter(|monitor| !monitor.is_primary)
         .collect(),
-      MonitorSelection::Index(index) => {
-        monitors.get(*index).cloned().into_iter().collect()
-      }
+      MonitorSelection::Index(index) => monitors.get(*index).cloned().into_iter().collect(),
       MonitorSelection::Name(name) => monitors
         .into_iter()
         .filter(|monitor| monitor.name.as_deref() == Some(name))

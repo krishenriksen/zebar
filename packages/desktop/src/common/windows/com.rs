@@ -1,6 +1,4 @@
-use windows::Win32::System::Com::{
-  CoInitializeEx, CoUninitialize, COINIT_MULTITHREADED,
-};
+use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_MULTITHREADED};
 
 thread_local! {
   /// Manages per-thread COM initialization. COM must be initialized on each

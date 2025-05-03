@@ -5,10 +5,7 @@ use std::{
 
 use anyhow::{bail, Context};
 use serde::{Deserialize, Serialize};
-use shell_util::{
-  Buffer, ChildProcessEvent, CommandOptions, ProcessId, Shell,
-  ShellExecOutput,
-};
+use shell_util::{Buffer, ChildProcessEvent, CommandOptions, ProcessId, Shell, ShellExecOutput};
 use tauri::{AppHandle, Emitter};
 use tokio::sync::{mpsc, oneshot};
 
@@ -43,9 +40,7 @@ pub enum ShellCommandArgs {
 impl From<ShellCommandArgs> for Vec<String> {
   fn from(val: ShellCommandArgs) -> Self {
     match val {
-      ShellCommandArgs::String(args) => {
-        args.split(' ').map(String::from).collect()
-      }
+      ShellCommandArgs::String(args) => args.split(' ').map(String::from).collect(),
       ShellCommandArgs::Array(args) => args,
     }
   }
@@ -70,10 +65,7 @@ pub struct ShellState {
 
 impl ShellState {
   /// Creates a new `ShellState` instance.
-  pub fn new(
-    app_handle: &AppHandle,
-    widget_factory: Arc<WidgetFactory>,
-  ) -> Self {
+  pub fn new(app_handle: &AppHandle, widget_factory: Arc<WidgetFactory>) -> Self {
     Self {
       children: Arc::new(Mutex::new(HashMap::new())),
       app_handle: app_handle.clone(),
@@ -170,11 +162,7 @@ impl ShellState {
   }
 
   /// Writes data to the standard input of a running process.
-  pub fn write(
-    &self,
-    pid: ProcessId,
-    buffer: Buffer,
-  ) -> anyhow::Result<()> {
+  pub fn write(&self, pid: ProcessId, buffer: Buffer) -> anyhow::Result<()> {
     if let Some(handle) = self.children.lock().unwrap().get(&pid) {
       handle
         .write_tx
@@ -211,9 +199,7 @@ impl ShellState {
       .widget_factory
       .state_by_id(widget_id)
       .await
-      .with_context(|| {
-        format!("Widget with ID '{widget_id}' not found.")
-      })?;
+      .with_context(|| format!("Widget with ID '{widget_id}' not found."))?;
 
     let args_str: String = args.into();
     let shell_privileges = widget.config.privileges.shell_commands;

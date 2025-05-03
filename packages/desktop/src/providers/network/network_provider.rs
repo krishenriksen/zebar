@@ -3,14 +3,11 @@ use sysinfo::Networks;
 
 use super::{
   wifi_hotspot::{default_gateway_wifi, WifiHotstop},
-  InterfaceType, NetworkGateway, NetworkInterface, NetworkTraffic,
-  NetworkTrafficMeasure,
+  InterfaceType, NetworkGateway, NetworkInterface, NetworkTraffic, NetworkTrafficMeasure,
 };
 use crate::{
   common::{to_iec_bytes, to_si_bytes, SyncInterval},
-  providers::{
-    CommonProviderState, Provider, ProviderInputMsg, RuntimeType,
-  },
+  providers::{CommonProviderState, Provider, ProviderInputMsg, RuntimeType},
 };
 
 #[derive(Deserialize, Debug)]
@@ -35,10 +32,7 @@ pub struct NetworkProvider {
 }
 
 impl NetworkProvider {
-  pub fn new(
-    config: NetworkProviderConfig,
-    common: CommonProviderState,
-  ) -> NetworkProvider {
+  pub fn new(config: NetworkProviderConfig, common: CommonProviderState) -> NetworkProvider {
     NetworkProvider {
       config,
       common,
@@ -55,15 +49,11 @@ impl NetworkProvider {
     let (received, total_received) = Self::bytes_received(&self.netinfo);
     let received_per_sec = received / self.config.refresh_interval * 1000;
 
-    let (transmitted, total_transmitted) =
-      Self::bytes_transmitted(&self.netinfo);
-    let transmitted_per_sec =
-      transmitted / self.config.refresh_interval * 1000;
+    let (transmitted, total_transmitted) = Self::bytes_transmitted(&self.netinfo);
+    let transmitted_per_sec = transmitted / self.config.refresh_interval * 1000;
 
     Ok(NetworkOutput {
-      default_interface: default_interface
-        .as_ref()
-        .map(Self::transform_interface),
+      default_interface: default_interface.as_ref().map(Self::transform_interface),
       default_gateway: default_interface
         .and_then(|interface| interface.gateway)
         .and_then(|gateway| {
@@ -71,26 +61,17 @@ impl NetworkProvider {
             .map(|wifi| Self::transform_gateway(&gateway, wifi))
             .ok()
         }),
-      interfaces: interfaces
-        .iter()
-        .map(Self::transform_interface)
-        .collect(),
+      interfaces: interfaces.iter().map(Self::transform_interface).collect(),
       traffic: NetworkTraffic {
         received: Self::to_network_traffic_measure(received_per_sec)?,
         total_received: Self::to_network_traffic_measure(total_received)?,
-        transmitted: Self::to_network_traffic_measure(
-          transmitted_per_sec,
-        )?,
-        total_transmitted: Self::to_network_traffic_measure(
-          total_transmitted,
-        )?,
+        transmitted: Self::to_network_traffic_measure(transmitted_per_sec)?,
+        total_transmitted: Self::to_network_traffic_measure(total_transmitted)?,
       },
     })
   }
 
-  fn to_network_traffic_measure(
-    bytes: u64,
-  ) -> anyhow::Result<NetworkTrafficMeasure> {
+  fn to_network_traffic_measure(bytes: u64) -> anyhow::Result<NetworkTrafficMeasure> {
     let (si_value, si_unit) = to_si_bytes(bytes as f64);
     let (iec_value, iec_unit) = to_iec_bytes(bytes as f64);
 
@@ -142,24 +123,14 @@ impl NetworkProvider {
   }
 
   /// Transforms a `netdev::Interface` into a `NetworkInterface`.
-  fn transform_interface(
-    interface: &netdev::Interface,
-  ) -> NetworkInterface {
+  fn transform_interface(interface: &netdev::Interface) -> NetworkInterface {
     NetworkInterface {
       name: interface.name.to_string(),
       friendly_name: interface.friendly_name.clone(),
       description: interface.description.clone(),
       interface_type: InterfaceType::from(interface.if_type),
-      ipv4_addresses: interface
-        .ipv4
-        .iter()
-        .map(|ip| ip.to_string())
-        .collect(),
-      ipv6_addresses: interface
-        .ipv6
-        .iter()
-        .map(|ip| ip.to_string())
-        .collect(),
+      ipv4_addresses: interface.ipv4.iter().map(|ip| ip.to_string()).collect(),
+      ipv6_addresses: interface.ipv6.iter().map(|ip| ip.to_string()).collect(),
       mac_address: interface.mac_addr.map(|mac| mac.to_string()),
       transmit_speed: interface.transmit_speed,
       receive_speed: interface.receive_speed,
@@ -179,16 +150,8 @@ impl NetworkProvider {
   ) -> NetworkGateway {
     NetworkGateway {
       mac_address: gateway.mac_addr.address(),
-      ipv4_addresses: gateway
-        .ipv4
-        .iter()
-        .map(|ip| ip.to_string())
-        .collect(),
-      ipv6_addresses: gateway
-        .ipv6
-        .iter()
-        .map(|ip| ip.to_string())
-        .collect(),
+      ipv4_addresses: gateway.ipv4.iter().map(|ip| ip.to_string()).collect(),
+      ipv6_addresses: gateway.ipv6.iter().map(|ip| ip.to_string()).collect(),
       ssid: wifi_hotspot.ssid,
       signal_strength: wifi_hotspot.signal_strength,
     }

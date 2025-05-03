@@ -28,9 +28,7 @@ pub enum Encoding {
 
 impl Encoding {
   pub fn decode(&self, line: Vec<u8>) -> Buffer {
-    match <&Encoding as TryInto<&'static encoding_rs::Encoding>>::try_into(
-      self,
-    ) {
+    match <&Encoding as TryInto<&'static encoding_rs::Encoding>>::try_into(self) {
       Ok(encoding) => {
         let encoding = encoding.decode_with_bom_removal(&line).0;
         Buffer::Text(encoding.into())
@@ -43,9 +41,7 @@ impl Encoding {
 impl TryInto<&'static encoding_rs::Encoding> for &Encoding {
   type Error = ();
 
-  fn try_into(
-    self,
-  ) -> Result<&'static encoding_rs::Encoding, Self::Error> {
+  fn try_into(self) -> Result<&'static encoding_rs::Encoding, Self::Error> {
     match self {
       Encoding::Raw => Err(()),
       Encoding::Utf8 => Ok(encoding_rs::UTF_8),

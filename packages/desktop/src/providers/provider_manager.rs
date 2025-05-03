@@ -11,13 +11,11 @@ use tracing::info;
 
 #[cfg(windows)]
 use super::{
-  audio::AudioProvider, media::MediaProvider, systray::SystrayProvider,
-  window::WindowProvider,
+  audio::AudioProvider, media::MediaProvider, systray::SystrayProvider, window::WindowProvider,
 };
 use super::{
-  battery::BatteryProvider, cpu::CpuProvider, gpu::GpuProvider,
-  memory::MemoryProvider, network::NetworkProvider, Provider,
-  ProviderConfig, ProviderFunction, ProviderFunctionResponse,
+  battery::BatteryProvider, cpu::CpuProvider, gpu::GpuProvider, memory::MemoryProvider,
+  network::NetworkProvider, Provider, ProviderConfig, ProviderFunction, ProviderFunctionResponse,
   ProviderFunctionResult, ProviderOutput, RuntimeType,
 };
 
@@ -152,9 +150,7 @@ impl ProviderManager {
   ///
   /// Returns a tuple containing the `ProviderManager` instance and a
   /// channel for provider emissions.
-  pub fn new(
-    app_handle: &AppHandle,
-  ) -> (Arc<Self>, mpsc::UnboundedReceiver<ProviderEmission>) {
+  pub fn new(app_handle: &AppHandle) -> (Arc<Self>, mpsc::UnboundedReceiver<ProviderEmission>) {
     let (emit_tx, emit_rx) = mpsc::unbounded_channel::<ProviderEmission>();
 
     (
@@ -170,21 +166,12 @@ impl ProviderManager {
   }
 
   /// Creates a provider with the given config.
-  pub async fn create(
-    &self,
-    config_hash: String,
-    config: ProviderConfig,
-  ) -> anyhow::Result<()> {
+  pub async fn create(&self, config_hash: String, config: ProviderConfig) -> anyhow::Result<()> {
     // If a provider with the given config already exists, re-emit its
     // latest emission and return early.
     {
-      if let Some(found_emit) =
-        self.emit_cache.lock().await.get(&config_hash)
-      {
-        tracing::info!(
-          "Emitting cached provider emission for: {}",
-          config_hash
-        );
+      if let Some(found_emit) = self.emit_cache.lock().await.get(&config_hash) {
+        tracing::info!("Emitting cached provider emission for: {}", config_hash);
 
         self.app_handle.emit("provider-emit", found_emit)?;
         return Ok(());
@@ -221,8 +208,7 @@ impl ProviderManager {
       sysinfo: self.sysinfo.clone(),
     };
 
-    let (task_handle, runtime_type) =
-      self.create_instance(config, config_hash.clone(), common)?;
+    let (task_handle, runtime_type) = self.create_instance(config, config_hash.clone(), common)?;
 
     let provider_ref = ProviderRef {
       async_input_tx,

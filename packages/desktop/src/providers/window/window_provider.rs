@@ -1,9 +1,7 @@
 use serde::{Deserialize, Serialize};
 use window_util::Window;
 
-use crate::providers::{
-  CommonProviderState, Provider, ProviderInputMsg, RuntimeType,
-};
+use crate::providers::{CommonProviderState, Provider, ProviderInputMsg, RuntimeType};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -22,10 +20,7 @@ pub struct WindowProvider {
 }
 
 impl WindowProvider {
-  pub fn new(
-    _config: WindowProviderConfig,
-    common: CommonProviderState,
-  ) -> WindowProvider {
+  pub fn new(_config: WindowProviderConfig, common: CommonProviderState) -> WindowProvider {
     WindowProvider { _config, common }
   }
 }
@@ -38,9 +33,10 @@ impl Provider for WindowProvider {
 
   async fn start_async(&mut self) {
     let Ok(mut window) = Window::new() else {
-      self.common.emitter.emit_output::<WindowOutput>(Err(
-        anyhow::anyhow!("Failed to initialize window."),
-      ));
+      self
+        .common
+        .emitter
+        .emit_output::<WindowOutput>(Err(anyhow::anyhow!("Failed to initialize window.")));
       return;
     };
 

@@ -82,13 +82,11 @@ impl From<NdInterfaceType> for InterfaceType {
       NdInterfaceType::Ppp => InterfaceType::Ppp,
       NdInterfaceType::Loopback => InterfaceType::Loopback,
       NdInterfaceType::Slip => InterfaceType::Slip,
-      NdInterfaceType::Atm | NdInterfaceType::IPOverAtm => {
-        InterfaceType::Atm
-      }
+      NdInterfaceType::Atm | NdInterfaceType::IPOverAtm => InterfaceType::Atm,
       NdInterfaceType::GenericModem => InterfaceType::GenericModem,
-      NdInterfaceType::Isdn
-      | NdInterfaceType::BasicIsdn
-      | NdInterfaceType::PrimaryIsdn => InterfaceType::Isdn,
+      NdInterfaceType::Isdn | NdInterfaceType::BasicIsdn | NdInterfaceType::PrimaryIsdn => {
+        InterfaceType::Isdn
+      }
       NdInterfaceType::Wireless80211 => InterfaceType::Wifi,
       NdInterfaceType::AsymmetricDsl
       | NdInterfaceType::RateAdaptDsl
@@ -96,12 +94,10 @@ impl From<NdInterfaceType> for InterfaceType {
       | NdInterfaceType::VeryHighSpeedDsl
       | NdInterfaceType::MultiRateSymmetricDsl => InterfaceType::Dsl,
       NdInterfaceType::Tunnel => InterfaceType::Tunnel,
-      NdInterfaceType::HighPerformanceSerialBus => {
-        InterfaceType::HighPerformanceSerialBus
+      NdInterfaceType::HighPerformanceSerialBus => InterfaceType::HighPerformanceSerialBus,
+      NdInterfaceType::Wman | NdInterfaceType::Wwanpp | NdInterfaceType::Wwanpp2 => {
+        InterfaceType::MobileBroadband
       }
-      NdInterfaceType::Wman
-      | NdInterfaceType::Wwanpp
-      | NdInterfaceType::Wwanpp2 => InterfaceType::MobileBroadband,
       NdInterfaceType::Bridge => InterfaceType::Bridge,
     }
   }

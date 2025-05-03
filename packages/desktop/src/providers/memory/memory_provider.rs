@@ -2,9 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
   common::SyncInterval,
-  providers::{
-    CommonProviderState, Provider, ProviderInputMsg, RuntimeType,
-  },
+  providers::{CommonProviderState, Provider, ProviderInputMsg, RuntimeType},
 };
 
 #[derive(Deserialize, Debug)]
@@ -31,10 +29,7 @@ pub struct MemoryProvider {
 }
 
 impl MemoryProvider {
-  pub fn new(
-    config: MemoryProviderConfig,
-    common: CommonProviderState,
-  ) -> MemoryProvider {
+  pub fn new(config: MemoryProviderConfig, common: CommonProviderState) -> MemoryProvider {
     MemoryProvider { config, common }
   }
 
@@ -42,9 +37,7 @@ impl MemoryProvider {
     let mut sysinfo = self.common.sysinfo.blocking_lock();
     sysinfo.refresh_memory();
 
-    let usage = (sysinfo.used_memory() as f32
-      / sysinfo.total_memory() as f32)
-      * 100.0;
+    let usage = (sysinfo.used_memory() as f32 / sysinfo.total_memory() as f32) * 100.0;
 
     Ok(MemoryOutput {
       usage,

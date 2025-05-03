@@ -10,10 +10,7 @@ use crate::common::macos::WindowExtMacOs;
 use crate::common::windows::WindowExtWindows;
 use crate::{
   config::{Config, WidgetConfig, WidgetPlacement},
-  providers::{
-    ProviderConfig, ProviderFunction, ProviderFunctionResponse,
-    ProviderManager,
-  },
+  providers::{ProviderConfig, ProviderFunction, ProviderFunctionResponse, ProviderManager},
   shell_state::{ShellCommandArgs, ShellState},
   widget_factory::{WidgetFactory, WidgetOpenOptions, WidgetState},
 };
@@ -136,10 +133,7 @@ pub fn set_always_on_top(window: Window) -> anyhow::Result<(), String> {
 }
 
 #[tauri::command]
-pub fn set_skip_taskbar(
-  window: Window,
-  skip: bool,
-) -> anyhow::Result<(), String> {
+pub fn set_skip_taskbar(window: Window, skip: bool) -> anyhow::Result<(), String> {
   window
     .set_skip_taskbar(skip)
     .map_err(|err| err.to_string())?;

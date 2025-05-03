@@ -8,26 +8,21 @@ use windows::{
     System::{
       DataExchange::COPYDATASTRUCT,
       Diagnostics::Debug::ReadProcessMemory,
-      Memory::{
-        VirtualAllocEx, VirtualFreeEx, MEM_COMMIT, MEM_RELEASE,
-        PAGE_READWRITE,
-      },
+      Memory::{VirtualAllocEx, VirtualFreeEx, MEM_COMMIT, MEM_RELEASE, PAGE_READWRITE},
       Threading::{OpenProcess, PROCESS_ALL_ACCESS},
     },
     UI::{
       Controls::{TBBUTTON, TBSTATE_HIDDEN},
       Shell::{
-        NIF_GUID, NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE,
-        NIM_MODIFY, NIM_SETVERSION, NIS_HIDDEN, NOTIFYICONDATAW_0,
-        NOTIFY_ICON_DATA_FLAGS, NOTIFY_ICON_INFOTIP_FLAGS,
+        NIF_GUID, NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE, NIM_MODIFY, NIM_SETVERSION,
+        NIS_HIDDEN, NOTIFYICONDATAW_0, NOTIFY_ICON_DATA_FLAGS, NOTIFY_ICON_INFOTIP_FLAGS,
         NOTIFY_ICON_MESSAGE, NOTIFY_ICON_STATE,
       },
       WindowsAndMessaging::{
-        DefWindowProcW, GetWindowThreadProcessId, PostMessageW,
-        RegisterWindowMessageW, SendMessageW, SendNotifyMessageW,
-        SetTimer, SetWindowPos, HWND_BROADCAST, HWND_TOPMOST,
-        SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WM_ACTIVATEAPP,
-        WM_COMMAND, WM_COPYDATA, WM_TIMER, WM_USER,
+        DefWindowProcW, GetWindowThreadProcessId, PostMessageW, RegisterWindowMessageW,
+        SendMessageW, SendNotifyMessageW, SetTimer, SetWindowPos, HWND_BROADCAST, HWND_TOPMOST,
+        SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WM_ACTIVATEAPP, WM_COMMAND, WM_COPYDATA, WM_TIMER,
+        WM_USER,
       },
     },
   },
@@ -39,8 +34,7 @@ use crate::Util;
 /// Global instance of sender for tray events.
 ///
 /// For use with window procedure.
-static TRAY_EVENT_TX: OnceLock<mpsc::UnboundedSender<TrayEvent>> =
-  OnceLock::new();
+static TRAY_EVENT_TX: OnceLock<mpsc::UnboundedSender<TrayEvent>> = OnceLock::new();
 
 const TB_BUTTONCOUNT: u32 = WM_USER + 24;
 const TB_GETBUTTON: u32 = WM_USER + 23;
@@ -136,9 +130,7 @@ pub(crate) struct IconEventData {
 
 impl From<NotifyIconData> for IconEventData {
   fn from(icon_data: NotifyIconData) -> Self {
-    let icon_handle = if icon_data.icon_handle != 0
-      && icon_data.flags.0 & NIF_ICON.0 != 0
-    {
+    let icon_handle = if icon_data.icon_handle != 0 && icon_data.flags.0 & NIF_ICON.0 != 0 {
       Some(icon_data.icon_handle as isize)
     } else {
       None
@@ -153,13 +145,11 @@ impl From<NotifyIconData> for IconEventData {
     };
 
     let tooltip = if icon_data.flags.0 & NIF_TIP.0 != 0 {
-      let tooltip_len =
-        icon_data.tooltip.iter().position(|&c| c == 0).unwrap_or(0);
+      let tooltip_len = icon_data.tooltip.iter().position(|&c| c == 0).unwrap_or(0);
 
-      let tooltip_str =
-        String::from_utf16_lossy(&icon_data.tooltip[..tooltip_len])
-          .replace('\r', "")
-          .to_string();
+      let tooltip_str = String::from_utf16_lossy(&icon_data.tooltip[..tooltip_len])
+        .replace('\r', "")
+        .to_string();
 
       (!tooltip_str.is_empty()).then_some(tooltip_str)
     } else {
@@ -215,13 +205,11 @@ impl From<TbButtonItem> for IconEventData {
       None
     };
 
-    let tooltip_len =
-      tb_item.icon_text.iter().position(|&c| c == 0).unwrap_or(0);
+    let tooltip_len = tb_item.icon_text.iter().position(|&c| c == 0).unwrap_or(0);
 
-    let tooltip =
-      String::from_utf16_lossy(&tb_item.icon_text[..tooltip_len])
-        .replace('\r', "")
-        .to_string();
+    let tooltip = String::from_utf16_lossy(&tb_item.icon_text[..tooltip_len])
+      .replace('\r', "")
+      .to_string();
 
     IconEventData {
       uid: Some(tb_item.uid),
@@ -246,8 +234,7 @@ pub(crate) struct TraySpy {
 
 impl TraySpy {
   /// Creates a new `TraySpy` instance.
-  pub fn new() -> crate::Result<(Self, mpsc::UnboundedReceiver<TrayEvent>)>
-  {
+  pub fn new() -> crate::Result<(Self, mpsc::UnboundedReceiver<TrayEvent>)> {
     let (event_tx, event_rx) = mpsc::unbounded_channel();
 
     // Add the sender for tray events to global state.
@@ -277,17 +264,13 @@ impl TraySpy {
 
   /// Creates the spy window and runs its message loop.
   fn run() -> crate::Result<()> {
-    let window = Util::create_message_window(
-      "Shell_TrayWnd",
-      Some(Self::window_proc),
-    )?;
+    let window = Util::create_message_window("Shell_TrayWnd", Some(Self::window_proc))?;
 
     // TODO: Check whether this can be done in a better way. Check out
     // SimpleClassicTheme.Taskbar project for potential implementation.
     unsafe { SetTimer(HWND(window as _), 1, 100, None) };
 
-    let event_tx =
-      TRAY_EVENT_TX.get().expect("Tray event sender not set.");
+    let event_tx = TRAY_EVENT_TX.get().expect("Tray event sender not set.");
 
     Self::refresh_icons()?;
 
@@ -298,9 +281,7 @@ impl TraySpy {
         }
       }
     } else {
-      tracing::warn!(
-        "Failed to retrieve initial tray icons. This is expected on W11."
-      );
+      tracing::warn!("Failed to retrieve initial tray icons. This is expected on W11.");
     }
 
     Util::run_message_loop();
@@ -308,12 +289,7 @@ impl TraySpy {
     Ok(())
   }
 
-  extern "system" fn window_proc(
-    hwnd: HWND,
-    msg: u32,
-    wparam: WPARAM,
-    lparam: LPARAM,
-  ) -> LRESULT {
+  extern "system" fn window_proc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     match msg {
       WM_TIMER => {
         // Regain tray priority.
@@ -331,40 +307,24 @@ impl TraySpy {
     }
   }
 
-  fn handle_copy_data(
-    hwnd: HWND,
-    msg: u32,
-    wparam: WPARAM,
-    lparam: LPARAM,
-  ) -> LRESULT {
+  fn handle_copy_data(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     // Extract `COPYDATASTRUCT` and return early if invalid.
-    let Some(copy_data) =
-      (unsafe { (lparam.0 as *const COPYDATASTRUCT).as_ref() })
-    else {
+    let Some(copy_data) = (unsafe { (lparam.0 as *const COPYDATASTRUCT).as_ref() }) else {
       return LRESULT(0);
     };
 
     match copy_data.dwData {
       1 if !copy_data.lpData.is_null() => {
-        let tray_message =
-          unsafe { &*copy_data.lpData.cast::<ShellTrayMessage>() };
+        let tray_message = unsafe { &*copy_data.lpData.cast::<ShellTrayMessage>() };
 
-        let event_tx =
-          TRAY_EVENT_TX.get().expect("Tray event sender not set.");
+        let event_tx = TRAY_EVENT_TX.get().expect("Tray event sender not set.");
 
-        let tray_event =
-          match NOTIFY_ICON_MESSAGE(tray_message.message_type) {
-            NIM_ADD => {
-              Some(TrayEvent::IconAdd(tray_message.icon_data.into()))
-            }
-            NIM_MODIFY | NIM_SETVERSION => {
-              Some(TrayEvent::IconUpdate(tray_message.icon_data.into()))
-            }
-            NIM_DELETE => {
-              Some(TrayEvent::IconRemove(tray_message.icon_data.into()))
-            }
-            _ => None,
-          };
+        let tray_event = match NOTIFY_ICON_MESSAGE(tray_message.message_type) {
+          NIM_ADD => Some(TrayEvent::IconAdd(tray_message.icon_data.into())),
+          NIM_MODIFY | NIM_SETVERSION => Some(TrayEvent::IconUpdate(tray_message.icon_data.into())),
+          NIM_DELETE => Some(TrayEvent::IconRemove(tray_message.icon_data.into())),
+          _ => None,
+        };
 
         tracing::debug!("Tray event: {:?}", tray_event);
 
@@ -375,8 +335,7 @@ impl TraySpy {
         Self::forward_message(hwnd, msg, wparam, lparam)
       }
       3 if !copy_data.lpData.is_null() => {
-        let icon_identifier =
-          unsafe { &*copy_data.lpData.cast::<NotifyIconIdentifier>() };
+        let icon_identifier = unsafe { &*copy_data.lpData.cast::<NotifyIconIdentifier>() };
 
         let cursor_pos = match Util::cursor_position() {
           Ok(pos) => pos,
@@ -387,14 +346,8 @@ impl TraySpy {
         };
 
         match icon_identifier.message {
-          1 => LRESULT(Util::pack_i32(
-            cursor_pos.0 as i16,
-            cursor_pos.0 as i16,
-          ) as _),
-          2 => LRESULT(Util::pack_i32(
-            cursor_pos.1 as i16 + 1,
-            cursor_pos.1 as i16 + 1,
-          ) as _),
+          1 => LRESULT(Util::pack_i32(cursor_pos.0 as i16, cursor_pos.0 as i16) as _),
+          2 => LRESULT(Util::pack_i32(cursor_pos.1 as i16 + 1, cursor_pos.1 as i16 + 1) as _),
           _ => LRESULT(0),
         }
       }
@@ -426,9 +379,7 @@ impl TraySpy {
   /// their side. These windows that fail also do not re-add their icons
   /// to the Windows taskbar when `explorer.exe` is restarted ordinarily.
   fn refresh_icons() -> crate::Result<()> {
-    tracing::info!(
-      "Refreshing icons by sending `TaskbarCreated` message."
-    );
+    tracing::info!("Refreshing icons by sending `TaskbarCreated` message.");
 
     let msg = unsafe { RegisterWindowMessageW(w!("TaskbarCreated")) };
 
@@ -441,13 +392,10 @@ impl TraySpy {
     Ok(())
   }
 
-  pub fn initial_tray_icons(
-    window_handle: isize,
-  ) -> crate::Result<Vec<IconEventData>> {
+  pub fn initial_tray_icons(window_handle: isize) -> crate::Result<Vec<IconEventData>> {
     tracing::info!("Finding initial tray icons.");
 
-    let tray = Util::find_tray_window(window_handle)
-      .ok_or(crate::Error::TrayNotFound)?;
+    let tray = Util::find_tray_window(window_handle).ok_or(crate::Error::TrayNotFound)?;
 
     let toolbars = [
       Util::find_tray_toolbar_window(tray),
@@ -460,8 +408,7 @@ impl TraySpy {
       GetWindowThreadProcessId(HWND(tray as _), Some(&mut process_id));
     }
 
-    let tray_process =
-      unsafe { OpenProcess(PROCESS_ALL_ACCESS, false, process_id) }?;
+    let tray_process = unsafe { OpenProcess(PROCESS_ALL_ACCESS, false, process_id) }?;
 
     // Allocate memory in target process.
     let buffer = unsafe {
@@ -482,18 +429,14 @@ impl TraySpy {
 
     for toolbar in toolbars.into_iter().flatten() {
       // Get number of tray icons.
-      let count = unsafe {
-        SendMessageW(HWND(toolbar as _), TB_BUTTONCOUNT, None, None)
-      }
-      .0 as usize;
+      let count =
+        unsafe { SendMessageW(HWND(toolbar as _), TB_BUTTONCOUNT, None, None) }.0 as usize;
 
       tracing::info!("Found {} buttons in toolbar.", count);
 
       // Read each button.
       for index in 0..count {
-        if let Ok(icon) =
-          Self::read_tray_icon(tray_process, buffer, toolbar, index)
-        {
+        if let Ok(icon) = Self::read_tray_icon(tray_process, buffer, toolbar, index) {
           icons.push(icon);
         }
       }
@@ -558,24 +501,12 @@ impl TraySpy {
 
   /// Whether a message should be forwarded to the real tray window.
   fn should_forward_message(msg: u32) -> bool {
-    msg == WM_COPYDATA
-      || msg == WM_ACTIVATEAPP
-      || msg == WM_COMMAND
-      || msg >= WM_USER
+    msg == WM_COPYDATA || msg == WM_ACTIVATEAPP || msg == WM_COMMAND || msg >= WM_USER
   }
 
   /// Forwards a message to the real tray window.
-  fn forward_message(
-    hwnd: HWND,
-    msg: u32,
-    wparam: WPARAM,
-    lparam: LPARAM,
-  ) -> LRESULT {
-    tracing::debug!(
-      "Forwarding msg: {:#x} - {} to real tray window.",
-      msg,
-      msg
-    );
+  fn forward_message(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+    tracing::debug!("Forwarding msg: {:#x} - {} to real tray window.", msg, msg);
 
     let Some(real_tray) = Util::find_tray_window(hwnd.0 as isize) else {
       tracing::warn!("No real tray found.");

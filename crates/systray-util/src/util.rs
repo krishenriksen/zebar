@@ -1,21 +1,18 @@
-use std::{
-  os::windows::io::AsRawHandle, ptr::addr_of_mut, thread::JoinHandle,
-};
+use std::{os::windows::io::AsRawHandle, ptr::addr_of_mut, thread::JoinHandle};
 
 use image::RgbaImage;
 use windows::Win32::{
   Foundation::{HANDLE, HWND, LPARAM, POINT, WPARAM},
   Graphics::Gdi::{
-    DeleteObject, GetDC, GetDIBits, GetObjectW, ReleaseDC, BITMAP,
-    BITMAPINFO, BITMAPINFOHEADER, DIB_RGB_COLORS,
+    DeleteObject, GetDC, GetDIBits, GetObjectW, ReleaseDC, BITMAP, BITMAPINFO, BITMAPINFOHEADER,
+    DIB_RGB_COLORS,
   },
   System::Threading::GetThreadId,
   UI::WindowsAndMessaging::{
-    CreateWindowExW, DispatchMessageW, FindWindowExW, FindWindowW,
-    GetCursorPos, GetIconInfo, GetMessageW, PostThreadMessageW,
-    RegisterClassW, TranslateMessage, CS_HREDRAW, CS_VREDRAW,
-    CW_USEDEFAULT, HICON, ICONINFO, MSG, WM_QUIT, WNDCLASSW, WNDPROC,
-    WS_EX_APPWINDOW, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_OVERLAPPEDWINDOW,
+    CreateWindowExW, DispatchMessageW, FindWindowExW, FindWindowW, GetCursorPos, GetIconInfo,
+    GetMessageW, PostThreadMessageW, RegisterClassW, TranslateMessage, CS_HREDRAW, CS_VREDRAW,
+    CW_USEDEFAULT, HICON, ICONINFO, MSG, WM_QUIT, WNDCLASSW, WNDPROC, WS_EX_APPWINDOW,
+    WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_OVERLAPPEDWINDOW,
   },
 };
 use windows_core::{w, PCWSTR};
@@ -85,21 +82,12 @@ impl Util {
   }
 
   /// Gracefully terminates the message loop on the given thread.
-  pub fn kill_message_loop<T>(
-    thread: &JoinHandle<T>,
-  ) -> crate::Result<()> {
+  pub fn kill_message_loop<T>(thread: &JoinHandle<T>) -> crate::Result<()> {
     let handle = thread.as_raw_handle();
     let handle = HANDLE(handle);
     let thread_id = unsafe { GetThreadId(handle) };
 
-    unsafe {
-      PostThreadMessageW(
-        thread_id,
-        WM_QUIT,
-        WPARAM::default(),
-        LPARAM::default(),
-      )
-    }?;
+    unsafe { PostThreadMessageW(thread_id, WM_QUIT, WPARAM::default(), LPARAM::default()) }?;
 
     Ok(())
   }
@@ -219,8 +207,7 @@ impl Util {
     // channels became standard.  Either white/black is used to
     // represent transparency. Modern icons will have partial transparency
     // throughout the icon from anti-aliasing
-    let is_mask_based =
-      color_buffer.chunks_exact(4).all(|chunk| chunk[3] == 0);
+    let is_mask_based = color_buffer.chunks_exact(4).all(|chunk| chunk[3] == 0);
 
     // Combine color and mask data. We also need to convert BGR to RGB,
     // meaning that the red and blue channels get swapped.
@@ -247,20 +234,13 @@ impl Util {
 
   /// Finds the Windows tray window, ignoring a specific window handle.
   pub fn find_tray_window(hwnd_ignore: isize) -> Option<isize> {
-    let mut taskbar_hwnd =
-      unsafe { FindWindowW(w!("Shell_TrayWnd"), None) }.ok()?;
+    let mut taskbar_hwnd = unsafe { FindWindowW(w!("Shell_TrayWnd"), None) }.ok()?;
 
     if hwnd_ignore != 0 {
       while taskbar_hwnd == HWND(hwnd_ignore as _) {
-        taskbar_hwnd = unsafe {
-          FindWindowExW(
-            HWND::default(),
-            taskbar_hwnd,
-            w!("Shell_TrayWnd"),
-            None,
-          )
-        }
-        .ok()?;
+        taskbar_hwnd =
+          unsafe { FindWindowExW(HWND::default(), taskbar_hwnd, w!("Shell_TrayWnd"), None) }
+            .ok()?;
       }
     }
 
@@ -270,24 +250,14 @@ impl Util {
   /// Finds the toolbar window (contains tray icons) within the given tray
   /// window.
   pub fn find_tray_toolbar_window(tray_handle: isize) -> Option<isize> {
-    let notify = unsafe {
-      FindWindowExW(
-        HWND(tray_handle as _),
-        None,
-        w!("TrayNotifyWnd"),
-        None,
-      )
-    }
-    .ok()?;
+    let notify =
+      unsafe { FindWindowExW(HWND(tray_handle as _), None, w!("TrayNotifyWnd"), None) }.ok()?;
     tracing::info!("Found TrayNotifyWnd: {:?}", notify);
 
-    let pager =
-      unsafe { FindWindowExW(notify, None, w!("SysPager"), None) }.ok()?;
+    let pager = unsafe { FindWindowExW(notify, None, w!("SysPager"), None) }.ok()?;
     tracing::info!("Found SysPager: {:?}", pager);
 
-    let toolbar =
-      unsafe { FindWindowExW(pager, None, w!("ToolbarWindow32"), None) }
-        .ok()?;
+    let toolbar = unsafe { FindWindowExW(pager, None, w!("ToolbarWindow32"), None) }.ok()?;
     tracing::info!("Found ToolbarWindow32: {:?}", toolbar);
 
     Some(toolbar.0 as isize)
@@ -297,12 +267,9 @@ impl Util {
   /// This is the window accessed via the chevron button in the Windows
   /// taskbar.
   pub fn find_overflow_toolbar_window() -> Option<isize> {
-    let notify =
-      unsafe { FindWindowW(w!("NotifyIconOverflowWindow"), None) }.ok()?;
+    let notify = unsafe { FindWindowW(w!("NotifyIconOverflowWindow"), None) }.ok()?;
 
-    let toolbar =
-      unsafe { FindWindowExW(notify, None, w!("ToolbarWindow32"), None) }
-        .ok()?;
+    let toolbar = unsafe { FindWindowExW(notify, None, w!("ToolbarWindow32"), None) }.ok()?;
 
     Some(toolbar.0 as isize)
   }

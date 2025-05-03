@@ -17,8 +17,8 @@ use windows::{
 };
 
 use crate::providers::{
-  CommonProviderState, MediaFunction, Provider, ProviderFunction,
-  ProviderFunctionResponse, ProviderInputMsg, RuntimeType,
+  CommonProviderState, MediaFunction, Provider, ProviderFunction, ProviderFunctionResponse,
+  ProviderInputMsg, RuntimeType,
 };
 
 #[derive(Deserialize, Debug)]
@@ -104,10 +104,7 @@ pub struct MediaProvider {
 }
 
 impl MediaProvider {
-  pub fn new(
-    _config: MediaProviderConfig,
-    common: CommonProviderState,
-  ) -> MediaProvider {
+  pub fn new(_config: MediaProviderConfig, common: CommonProviderState) -> MediaProvider {
     let (event_sender, event_receiver) = unbounded();
 
     Self {
@@ -136,8 +133,7 @@ impl MediaProvider {
     // properties normally only update when the end or start position
     // changes, so we manually re-fetch them periodically to update the
     // current position.
-    let timeline_interval =
-      crossbeam::channel::tick(Duration::from_secs(5));
+    let timeline_interval = crossbeam::channel::tick(Duration::from_secs(5));
 
     loop {
       crossbeam::select! {
@@ -177,10 +173,7 @@ impl MediaProvider {
   }
 
   /// Handles a media session event.
-  fn handle_event(
-    &mut self,
-    event: MediaSessionEvent,
-  ) -> anyhow::Result<()> {
+  fn handle_event(&mut self, event: MediaSessionEvent) -> anyhow::Result<()> {
     match event {
       MediaSessionEvent::CurrentSessionChanged => {
         let manager = GsmtcManager::RequestAsync()?.get()?;
@@ -194,35 +187,23 @@ impl MediaProvider {
         // Update timeline properties for all playing sessions.
         for session_state in self.session_states.values_mut() {
           if session_state.output.is_playing {
-            Self::update_timeline_properties(
-              &mut session_state.output,
-              &session_state.session,
-            )?;
+            Self::update_timeline_properties(&mut session_state.output, &session_state.session)?;
           }
         }
       }
       MediaSessionEvent::PlaybackInfoChanged(id) => {
         if let Some(session_state) = self.session_states.get_mut(&id) {
-          Self::update_playback_info(
-            &mut session_state.output,
-            &session_state.session,
-          )?;
+          Self::update_playback_info(&mut session_state.output, &session_state.session)?;
         }
       }
       MediaSessionEvent::MediaPropertiesChanged(id) => {
         if let Some(session_state) = self.session_states.get_mut(&id) {
-          Self::update_media_properties(
-            &mut session_state.output,
-            &session_state.session,
-          )?;
+          Self::update_media_properties(&mut session_state.output, &session_state.session)?;
         }
       }
       MediaSessionEvent::TimelinePropertiesChanged(id) => {
         if let Some(session_state) = self.session_states.get_mut(&id) {
-          Self::update_timeline_properties(
-            &mut session_state.output,
-            &session_state.session,
-          )?;
+          Self::update_timeline_properties(&mut session_state.output, &session_state.session)?;
         }
       }
     }
@@ -283,14 +264,11 @@ impl MediaProvider {
 
   /// Registers event callbacks with the session manager.
   ///
-  /// - `CurrentSessionChanged`: for when the active media session changes
-  ///   (e.g. when switching between media players).
+  /// - `CurrentSessionChanged`: for when the active media session changes (e.g.
+  ///   when switching between media players).
   /// - `SessionAddOrRemove`: for when the list of available media sessions
   ///   changes (e.g. when a media player is opened or closed).
-  fn register_session_change_callbacks(
-    &self,
-    manager: &GsmtcManager,
-  ) -> anyhow::Result<()> {
+  fn register_session_change_callbacks(&self, manager: &GsmtcManager) -> anyhow::Result<()> {
     // Handler for current session changes.
     manager.CurrentSessionChanged(&TypedEventHandler::new({
       let sender = self.event_sender.clone();
@@ -315,10 +293,7 @@ impl MediaProvider {
   }
 
   /// Updates the state of all media sessions.
-  fn update_session_states(
-    &mut self,
-    manager: &GsmtcManager,
-  ) -> anyhow::Result<()> {
+  fn update_session_states(&mut self, manager: &GsmtcManager) -> anyhow::Result<()> {
     let sessions = manager.GetSessions()?;
     let mut found_ids: HashSet<String> = HashSet::new();
 
@@ -331,8 +306,7 @@ impl MediaProvider {
         debug!("New media session detected: {}", session_id);
 
         let session_state = SessionState {
-          tokens: self
-            .register_session_callbacks(&session, &session_id)?,
+          tokens: self.register_session_callbacks(&session, &session_id)?,
           output: Self::to_media_session_output(&session, &session_id)?,
           session,
         };
@@ -352,10 +326,7 @@ impl MediaProvider {
     for session_id in &removed_ids {
       if let Some(session_state) = self.session_states.remove(session_id) {
         debug!("Media session ended: {}", session_id);
-        Self::remove_session_listeners(
-          &session_state.session,
-          &session_state.tokens,
-        );
+        Self::remove_session_listeners(&session_state.session, &session_state.tokens);
       }
     }
 
@@ -364,10 +335,7 @@ impl MediaProvider {
 
   /// Updates the current media session ID and marks the correct session as
   /// the current one.
-  fn update_current_session(
-    &mut self,
-    manager: &GsmtcManager,
-  ) -> anyhow::Result<()> {
+  fn update_current_session(&mut self, manager: &GsmtcManager) -> anyhow::Result<()> {
     self.current_session_id = manager
       .GetCurrentSession()
       .ok()
@@ -375,8 +343,7 @@ impl MediaProvider {
       .map(|session_id| session_id.to_string());
 
     for (session_id, state) in self.session_states.iter_mut() {
-      state.output.is_current_session =
-        Some(session_id) == self.current_session_id.as_ref();
+      state.output.is_current_session = Some(session_id) == self.current_session_id.as_ref();
     }
 
     Ok(())
@@ -396,7 +363,18 @@ impl MediaProvider {
         let session_id = session_id.to_string();
         move |_, _| {
           sender
-            .send(MediaSessionEvent::PlaybackInfoChanged(
+            .send(MediaSessionEvent::PlaybackInfoChanged(session_id.clone()))
+            .unwrap();
+
+          Ok(())
+        }
+      }))?,
+      properties: session.MediaPropertiesChanged(&TypedEventHandler::new({
+        let sender = self.event_sender.clone();
+        let session_id = session_id.to_string();
+        move |_, _| {
+          sender
+            .send(MediaSessionEvent::MediaPropertiesChanged(
               session_id.clone(),
             ))
             .unwrap();
@@ -404,44 +382,24 @@ impl MediaProvider {
           Ok(())
         }
       }))?,
-      properties: session.MediaPropertiesChanged(
-        &TypedEventHandler::new({
-          let sender = self.event_sender.clone();
-          let session_id = session_id.to_string();
-          move |_, _| {
-            sender
-              .send(MediaSessionEvent::MediaPropertiesChanged(
-                session_id.clone(),
-              ))
-              .unwrap();
+      timeline: session.TimelinePropertiesChanged(&TypedEventHandler::new({
+        let sender = self.event_sender.clone();
+        let session_id = session_id.to_string();
+        move |_, _| {
+          sender
+            .send(MediaSessionEvent::TimelinePropertiesChanged(
+              session_id.clone(),
+            ))
+            .unwrap();
 
-            Ok(())
-          }
-        }),
-      )?,
-      timeline: session.TimelinePropertiesChanged(
-        &TypedEventHandler::new({
-          let sender = self.event_sender.clone();
-          let session_id = session_id.to_string();
-          move |_, _| {
-            sender
-              .send(MediaSessionEvent::TimelinePropertiesChanged(
-                session_id.clone(),
-              ))
-              .unwrap();
-
-            Ok(())
-          }
-        }),
-      )?,
+          Ok(())
+        }
+      }))?,
     })
   }
 
   /// Cleans up event listeners from the given session.
-  fn remove_session_listeners(
-    session: &GsmtcSession,
-    tokens: &EventTokens,
-  ) {
+  fn remove_session_listeners(session: &GsmtcSession, tokens: &EventTokens) {
     let _ = session.RemovePlaybackInfoChanged(tokens.playback);
     let _ = session.RemoveMediaPropertiesChanged(tokens.properties);
     let _ = session.RemoveTimelinePropertiesChanged(tokens.timeline);
@@ -499,10 +457,8 @@ impl MediaProvider {
 
     session_output.title = (!title.is_empty()).then_some(title);
     session_output.artist = (!artist.is_empty()).then_some(artist);
-    session_output.album_title =
-      (!album_title.is_empty()).then_some(album_title);
-    session_output.album_artist =
-      (!album_artist.is_empty()).then_some(album_artist);
+    session_output.album_title = (!album_title.is_empty()).then_some(album_title);
+    session_output.album_artist = (!album_artist.is_empty()).then_some(album_artist);
     session_output.track_number = properties.TrackNumber()? as u32;
 
     Ok(())
@@ -515,12 +471,9 @@ impl MediaProvider {
   ) -> anyhow::Result<()> {
     let properties = session.GetTimelineProperties()?;
 
-    session_output.start_time =
-      properties.StartTime()?.Duration as u64 / 10_000_000;
-    session_output.end_time =
-      properties.EndTime()?.Duration as u64 / 10_000_000;
-    session_output.position =
-      properties.Position()?.Duration as u64 / 10_000_000;
+    session_output.start_time = properties.StartTime()?.Duration as u64 / 10_000_000;
+    session_output.end_time = properties.EndTime()?.Duration as u64 / 10_000_000;
+    session_output.position = properties.Position()?.Duration as u64 / 10_000_000;
 
     Ok(())
   }
@@ -532,8 +485,7 @@ impl MediaProvider {
   ) -> anyhow::Result<()> {
     let info = session.GetPlaybackInfo()?;
 
-    session_output.is_playing =
-      info.PlaybackStatus()? == GsmtcPlaybackStatus::Playing;
+    session_output.is_playing = info.PlaybackStatus()? == GsmtcPlaybackStatus::Playing;
 
     Ok(())
   }
@@ -542,10 +494,7 @@ impl MediaProvider {
 impl Drop for MediaProvider {
   fn drop(&mut self) {
     for (_, session_state) in &self.session_states {
-      Self::remove_session_listeners(
-        &session_state.session,
-        &session_state.tokens,
-      );
+      Self::remove_session_listeners(&session_state.session, &session_state.tokens);
     }
   }
 }

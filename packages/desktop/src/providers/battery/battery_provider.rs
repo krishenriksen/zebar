@@ -1,18 +1,13 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use starship_battery::{
-  units::{
-    electric_potential::volt, power::watt, ratio::percent,
-    time::millisecond,
-  },
+  units::{electric_potential::volt, power::watt, ratio::percent, time::millisecond},
   Manager, State,
 };
 
 use crate::{
   common::SyncInterval,
-  providers::{
-    CommonProviderState, Provider, ProviderInputMsg, RuntimeType,
-  },
+  providers::{CommonProviderState, Provider, ProviderInputMsg, RuntimeType},
 };
 
 #[derive(Deserialize, Debug)]
@@ -41,10 +36,7 @@ pub struct BatteryProvider {
 }
 
 impl BatteryProvider {
-  pub fn new(
-    config: BatteryProviderConfig,
-    common: CommonProviderState,
-  ) -> BatteryProvider {
+  pub fn new(config: BatteryProviderConfig, common: CommonProviderState) -> BatteryProvider {
     BatteryProvider { config, common }
   }
 
@@ -60,9 +52,7 @@ impl BatteryProvider {
       health_percent: battery.state_of_health().get::<percent>(),
       state: battery.state().to_string(),
       is_charging: battery.state() == State::Charging,
-      time_till_full: battery
-        .time_to_full()
-        .map(|time| time.get::<millisecond>()),
+      time_till_full: battery.time_to_full().map(|time| time.get::<millisecond>()),
       time_till_empty: battery
         .time_to_empty()
         .map(|time| time.get::<millisecond>()),

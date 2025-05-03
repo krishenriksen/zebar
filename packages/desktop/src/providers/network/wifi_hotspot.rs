@@ -5,9 +5,8 @@ use anyhow::Context;
 use windows::Win32::{
   Foundation::{HANDLE, INVALID_HANDLE_VALUE, WIN32_ERROR},
   NetworkManagement::WiFi::{
-    wlan_intf_opcode_current_connection, WlanCloseHandle,
-    WlanEnumInterfaces, WlanFreeMemory, WlanOpenHandle,
-    WlanQueryInterface, WLAN_CONNECTION_ATTRIBUTES,
+    wlan_intf_opcode_current_connection, WlanCloseHandle, WlanEnumInterfaces, WlanFreeMemory,
+    WlanOpenHandle, WlanQueryInterface, WLAN_CONNECTION_ATTRIBUTES,
   },
 };
 
@@ -45,29 +44,17 @@ pub fn default_gateway_wifi() -> anyhow::Result<WifiHotstop> {
     let mut wlan_handle = WlanHandle(INVALID_HANDLE_VALUE);
 
     WIN32_ERROR(unsafe {
-      WlanOpenHandle(
-        2,
-        None,
-        &mut pdw_negotiated_version,
-        &mut wlan_handle.0,
-      )
+      WlanOpenHandle(2, None, &mut pdw_negotiated_version, &mut wlan_handle.0)
     })
     .ok()
     .context("Failed to open Wlan handle")?;
 
     let mut wlan_interface_info_list = std::ptr::null_mut();
-    WIN32_ERROR(unsafe {
-      WlanEnumInterfaces(
-        wlan_handle.0,
-        None,
-        &mut wlan_interface_info_list,
-      )
-    })
-    .ok()
-    .context("Failed to get Wlan interfaces")?;
+    WIN32_ERROR(unsafe { WlanEnumInterfaces(wlan_handle.0, None, &mut wlan_interface_info_list) })
+      .ok()
+      .context("Failed to get Wlan interfaces")?;
 
-    let guid = (unsafe { *wlan_interface_info_list }).InterfaceInfo[0]
-      .InterfaceGuid;
+    let guid = (unsafe { *wlan_interface_info_list }).InterfaceInfo[0].InterfaceGuid;
     unsafe { WlanFreeMemory(wlan_interface_info_list as *mut c_void) };
 
     let mut data_size = 0;
@@ -87,10 +74,8 @@ pub fn default_gateway_wifi() -> anyhow::Result<WifiHotstop> {
     .ok()
     .context("Failed to get connected Wlan interface")?;
 
-    let wlan_connection_atributes =
-      pdata as *mut WLAN_CONNECTION_ATTRIBUTES;
-    let atributes =
-      unsafe { *wlan_connection_atributes }.wlanAssociationAttributes;
+    let wlan_connection_atributes = pdata as *mut WLAN_CONNECTION_ATTRIBUTES;
+    let atributes = unsafe { *wlan_connection_atributes }.wlanAssociationAttributes;
 
     unsafe { WlanFreeMemory(pdata) };
 
@@ -102,8 +87,7 @@ pub fn default_gateway_wifi() -> anyhow::Result<WifiHotstop> {
       .skip_while(|&byte| byte == 0)
       .collect::<Vec<_>>();
     ssid_vec.reverse();
-    let ssid =
-      String::from_utf8(ssid_vec).context("Incorrectly formatted ssid")?;
+    let ssid = String::from_utf8(ssid_vec).context("Incorrectly formatted ssid")?;
 
     Ok(WifiHotstop {
       ssid: Some(ssid),

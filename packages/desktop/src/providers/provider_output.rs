@@ -1,13 +1,10 @@
 use serde::Serialize;
 
 #[cfg(windows)]
+use super::{audio::AudioOutput, media::MediaOutput, systray::SystrayOutput, window::WindowOutput};
 use super::{
-  audio::AudioOutput, media::MediaOutput, systray::SystrayOutput,
-  window::WindowOutput,
-};
-use super::{
-  battery::BatteryOutput, cpu::CpuOutput, gpu::GpuOutput,
-  memory::MemoryOutput, network::NetworkOutput,
+  battery::BatteryOutput, cpu::CpuOutput, gpu::GpuOutput, memory::MemoryOutput,
+  network::NetworkOutput,
 };
 
 /// Implements `From<T>` for `ProviderOutput` for each given variant.

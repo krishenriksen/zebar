@@ -27,9 +27,7 @@ static ASSET_SERVER_TOKENS: LazyLock<Mutex<HashMap<String, PathBuf>>> =
 pub fn setup_asset_server() {
   task::spawn(async move {
     let rocket = rocket::build()
-      .configure(
-        rocket::Config::figment().merge(("port", ASSET_SERVER_PORT)),
-      )
+      .configure(rocket::Config::figment().merge(("port", ASSET_SERVER_PORT)))
       .mount("/", routes![sw_js, normalize_css, init, serve]);
 
     if let Err(err) = rocket.launch().await {
@@ -38,10 +36,7 @@ pub fn setup_asset_server() {
   });
 }
 
-pub async fn create_init_url(
-  parent_dir: &Path,
-  html_path: &Path,
-) -> anyhow::Result<tauri::Url> {
+pub async fn create_init_url(parent_dir: &Path, html_path: &Path) -> anyhow::Result<tauri::Url> {
   // Generate a unique token to identify requests from the widget to the
   // asset server.
   let token = upsert_or_get_token(parent_dir).await;
@@ -82,11 +77,7 @@ async fn upsert_or_get_token(directory: &Path) -> String {
 }
 
 #[get("/__zebar/init?<token>&<redirect>")]
-pub fn init(
-  token: String,
-  redirect: String,
-  cookies: &CookieJar<'_>,
-) -> Redirect {
+pub fn init(token: String, redirect: String, cookies: &CookieJar<'_>) -> Redirect {
   // Create a http-only cookie with the widget's token.
   cookies.add(
     Cookie::build(("ZEBAR_TOKEN", token))
@@ -123,13 +114,9 @@ pub fn normalize_css() -> (ContentType, &'static str) {
 }
 
 #[rocket::get("/<path..>", rank = 100)]
-pub async fn serve(
-  path: Option<PathBuf>,
-  token: ServerToken,
-) -> Option<NamedFile> {
+pub async fn serve(path: Option<PathBuf>, token: ServerToken) -> Option<NamedFile> {
   // Retrieve base directory for the corresponding token.
-  let base_url =
-    { ASSET_SERVER_TOKENS.lock().await.get(&token.0).cloned() }?;
+  let base_url = { ASSET_SERVER_TOKENS.lock().await.get(&token.0).cloned() }?;
 
   let asset_path = base_url
     .join(path.unwrap_or("index.html".into()))
@@ -154,15 +141,11 @@ pub struct ServerToken(pub String);
 impl<'r> FromRequest<'r> for ServerToken {
   type Error = anyhow::Error;
 
-  async fn from_request(
-    request: &'r Request<'_>,
-  ) -> Outcome<Self, Self::Error> {
+  async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
     let token = request.cookies().get("ZEBAR_TOKEN");
 
     match token {
-      Some(token) => {
-        Outcome::Success(ServerToken(token.value_trimmed().to_string()))
-      }
+      Some(token) => Outcome::Success(ServerToken(token.value_trimmed().to_string())),
       None => Outcome::Error((
         Status::Unauthorized,
         anyhow::anyhow!("Missing token for accessing directory."),

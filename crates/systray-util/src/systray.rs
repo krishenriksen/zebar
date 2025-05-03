@@ -12,10 +12,9 @@ use windows::Win32::{
     Controls::{WM_MOUSEHOVER, WM_MOUSELEAVE},
     Shell::{NIN_POPUPCLOSE, NIN_POPUPOPEN, NIN_SELECT},
     WindowsAndMessaging::{
-      AllowSetForegroundWindow, GetWindowThreadProcessId, IsWindow,
-      SendNotifyMessageW, WM_CONTEXTMENU, WM_LBUTTONDOWN, WM_LBUTTONUP,
-      WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEMOVE, WM_RBUTTONDOWN,
-      WM_RBUTTONUP,
+      AllowSetForegroundWindow, GetWindowThreadProcessId, IsWindow, SendNotifyMessageW,
+      WM_CONTEXTMENU, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MOUSEMOVE,
+      WM_RBUTTONDOWN, WM_RBUTTONUP,
     },
   },
 };
@@ -140,10 +139,7 @@ impl std::fmt::Debug for SystrayIcon {
 
 impl SystrayIcon {
   /// Converts the icon image to a byte vector of the given image format.
-  pub fn to_image_format(
-    &self,
-    format: ImageFormat,
-  ) -> crate::Result<Vec<u8>> {
+  pub fn to_image_format(&self, format: ImageFormat) -> crate::Result<Vec<u8>> {
     let mut bytes: Vec<u8> = Vec::new();
 
     self
@@ -205,11 +201,7 @@ impl Systray {
   }
 
   /// Returns the icon with the given handle and uid.
-  pub fn icon_by_handle(
-    &self,
-    handle: isize,
-    uid: u32,
-  ) -> Option<&SystrayIcon> {
+  pub fn icon_by_handle(&self, handle: isize, uid: u32) -> Option<&SystrayIcon> {
     self.icons.get(&StableId::HandleUid(handle, uid))
   }
 
@@ -254,8 +246,7 @@ impl Systray {
       TrayEvent::IconAdd(icon_data) | TrayEvent::IconUpdate(icon_data) => {
         tracing::info!("Icon modified or added: {:?}", icon_data);
 
-        let found_icon_id =
-          self.find_icon(icon_data).map(|icon| icon.stable_id.clone());
+        let found_icon_id = self.find_icon(icon_data).map(|icon| icon.stable_id.clone());
 
         let found_icon = match found_icon_id {
           Some(id) => self.icons.get_mut(&id),
@@ -285,8 +276,7 @@ impl Systray {
             // existing icon.
             if found_icon.icon_handle != Some(icon_handle) {
               found_icon.icon_handle = Some(icon_handle);
-              found_icon.icon_image =
-                Util::icon_to_image(icon_handle).ok();
+              found_icon.icon_image = Util::icon_to_image(icon_handle).ok();
             }
           }
 
@@ -306,9 +296,7 @@ impl Systray {
           // cannot be identified.
           let stable_id = icon_data.guid.map(StableId::Guid).or({
             match (icon_data.window_handle, icon_data.uid) {
-              (Some(handle), Some(uid)) => {
-                Some(StableId::HandleUid(handle, uid))
-              }
+              (Some(handle), Some(uid)) => Some(StableId::HandleUid(handle, uid)),
               _ => None,
             }
           })?;
@@ -322,10 +310,7 @@ impl Systray {
             uid: icon_data.uid,
             window_handle: icon_data.window_handle,
             guid: icon_data.guid,
-            tooltip: icon_data
-              .tooltip
-              .clone()
-              .unwrap_or_else(|| "".to_string()),
+            tooltip: icon_data.tooltip.clone().unwrap_or_else(|| "".to_string()),
             icon_handle: icon_data.icon_handle,
             icon_image,
             callback_message: icon_data.callback_message,
@@ -340,8 +325,7 @@ impl Systray {
       TrayEvent::IconRemove(icon_data) => {
         tracing::info!("Icon removed: {:?}", icon_data);
 
-        let icon_id =
-          self.find_icon(icon_data).map(|icon| icon.stable_id.clone());
+        let icon_id = self.find_icon(icon_data).map(|icon| icon.stable_id.clone());
 
         if let Some(icon_id) = icon_id {
           self.icons.remove(&icon_id);
@@ -370,15 +354,12 @@ impl Systray {
     action: &SystrayIconAction,
   ) -> crate::Result<()> {
     tracing::info!("Sending icon action: {:?}", self.icons);
-    let icon =
-      self.icons.get(icon_id).ok_or(crate::Error::IconNotFound)?;
+    let icon = self.icons.get(icon_id).ok_or(crate::Error::IconNotFound)?;
 
     // Early return if we don't have the required fields.
-    let window_handle =
-      icon.window_handle.ok_or(crate::Error::InoperableIcon)?;
+    let window_handle = icon.window_handle.ok_or(crate::Error::InoperableIcon)?;
     let uid = icon.uid.ok_or(crate::Error::InoperableIcon)?;
-    let callback =
-      icon.callback_message.ok_or(crate::Error::InoperableIcon)?;
+    let callback = icon.callback_message.ok_or(crate::Error::InoperableIcon)?;
 
     // Checks whether the window associated with the given handle still
     // exists. If the window is invalid, removes the corresponding icon
@@ -389,9 +370,7 @@ impl Systray {
 
     let is_mouse_click = matches!(
       action,
-      SystrayIconAction::LeftClick
-        | SystrayIconAction::RightClick
-        | SystrayIconAction::MiddleClick
+      SystrayIconAction::LeftClick | SystrayIconAction::RightClick | SystrayIconAction::MiddleClick
     );
 
     // For mouse clicks, there is often a menu that appears after the
@@ -399,12 +378,7 @@ impl Systray {
     // dismissed after clicking outside.
     if is_mouse_click {
       let mut proc_id = u32::default();
-      unsafe {
-        GetWindowThreadProcessId(
-          HWND(window_handle as _),
-          Some(&mut proc_id),
-        )
-      };
+      unsafe { GetWindowThreadProcessId(HWND(window_handle as _), Some(&mut proc_id)) };
 
       let _ = unsafe { AllowSetForegroundWindow(proc_id) };
     }
@@ -423,13 +397,7 @@ impl Systray {
     };
 
     for wm_message in wm_messages {
-      Self::notify_icon(
-        window_handle,
-        callback,
-        uid,
-        icon.version,
-        wm_message,
-      )?;
+      Self::notify_icon(window_handle, callback, uid, icon.version, wm_message)?;
     }
 
     // Additional messages are sent for version 4 and above. Explorer sends
@@ -444,13 +412,7 @@ impl Systray {
         _ => return Ok(()),
       };
 
-      Self::notify_icon(
-        window_handle,
-        callback,
-        uid,
-        icon.version,
-        v3_message,
-      )?;
+      Self::notify_icon(window_handle, callback, uid, icon.version, v3_message)?;
     }
 
     Ok(())

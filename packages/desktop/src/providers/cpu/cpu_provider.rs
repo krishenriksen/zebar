@@ -2,9 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
   common::SyncInterval,
-  providers::{
-    CommonProviderState, Provider, ProviderInputMsg, RuntimeType,
-  },
+  providers::{CommonProviderState, Provider, ProviderInputMsg, RuntimeType},
 };
 
 #[derive(Deserialize, Debug)]
@@ -29,10 +27,7 @@ pub struct CpuProvider {
 }
 
 impl CpuProvider {
-  pub fn new(
-    config: CpuProviderConfig,
-    common: CommonProviderState,
-  ) -> CpuProvider {
+  pub fn new(config: CpuProviderConfig, common: CommonProviderState) -> CpuProvider {
     CpuProvider { config, common }
   }
 

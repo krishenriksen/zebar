@@ -52,8 +52,7 @@ impl Buffer {
   pub fn push(&mut self, buffer: Buffer) -> crate::Result<()> {
     match self {
       Buffer::Text(string) => {
-        let incoming_string =
-          buffer.as_str().ok_or(crate::Error::InvalidBuffer)?;
+        let incoming_string = buffer.as_str().ok_or(crate::Error::InvalidBuffer)?;
 
         string.push_str(incoming_string);
       }
@@ -279,10 +278,7 @@ impl Shell {
   }
 
   /// Spawns the command as a child process.
-  fn spawn_child(
-    command: &mut Command,
-    options: &CommandOptions,
-  ) -> crate::Result<ChildProcess> {
+  fn spawn_child(command: &mut Command, options: &CommandOptions) -> crate::Result<ChildProcess> {
     let (stdout_reader, stdout_writer) = pipe()?;
     let (stderr_reader, stderr_writer) = pipe()?;
     let (stdin_reader, stdin_writer) = pipe()?;
@@ -341,11 +337,7 @@ impl Shell {
   }
 
   /// Creates a `Command` instance.
-  fn create_command<I, S>(
-    program: &str,
-    args: I,
-    options: &CommandOptions,
-  ) -> Command
+  fn create_command<I, S>(program: &str, args: I, options: &CommandOptions) -> Command
   where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,

@@ -5,9 +5,7 @@
 use std::{env, sync::Arc};
 
 use clap::Parser;
-use tauri::{
-  async_runtime::block_on, AppHandle, Emitter, Manager, RunEvent,
-};
+use tauri::{async_runtime::block_on, AppHandle, Emitter, Manager, RunEvent};
 use tokio::{sync::mpsc, task};
 use tracing::{error, info, level_filters::LevelFilter};
 use tracing_subscriber::EnvFilter;
@@ -48,9 +46,7 @@ async fn main() -> anyhow::Result<()> {
   // Attach to parent console on Windows in release mode.
   #[cfg(all(windows, not(debug_assertions)))]
   {
-    use windows::Win32::System::Console::{
-      AttachConsole, ATTACH_PARENT_PROCESS,
-    };
+    use windows::Win32::System::Console::{AttachConsole, ATTACH_PARENT_PROCESS};
     let _ = unsafe { AttachConsole(ATTACH_PARENT_PROCESS) };
   }
 
@@ -136,10 +132,7 @@ fn output_query(app: &tauri::App, args: QueryArgs) -> anyhow::Result<()> {
 /// Starts Zebar - either with a specific widget or all widgets.
 async fn start_app(app: &mut tauri::App, cli: Cli) -> anyhow::Result<()> {
   tracing_subscriber::fmt()
-    .with_env_filter(
-      EnvFilter::from_env("LOG_LEVEL")
-        .add_directive(LevelFilter::INFO.into()),
-    )
+    .with_env_filter(EnvFilter::from_env("LOG_LEVEL").add_directive(LevelFilter::INFO.into()))
     .init();
 
   let config_dir_override = match cli.command() {
@@ -190,9 +183,7 @@ async fn start_app(app: &mut tauri::App, cli: Cli) -> anyhow::Result<()> {
   open_widgets_by_cli_command(cli, widget_factory.clone()).await?;
 
   // Add application icon to system tray.
-  let tray =
-    SysTray::new(app.handle(), config.clone(), widget_factory.clone())
-      .await?;
+  let tray = SysTray::new(app.handle(), config.clone(), widget_factory.clone()).await?;
 
   listen_events(
     app.handle(),
@@ -221,8 +212,7 @@ fn listen_events(
   let mut widget_close_rx = widget_factory.close_tx.subscribe();
   let mut settings_change_rx = config.settings_change_tx.subscribe();
   let mut monitors_change_rx = monitor_state.change_tx.subscribe();
-  let mut widget_configs_change_rx =
-    config.widget_configs_change_tx.subscribe();
+  let mut widget_configs_change_rx = config.widget_configs_change_tx.subscribe();
 
   task::spawn(async move {
     loop {
@@ -286,8 +276,9 @@ fn setup_single_instance(
   app: &tauri::App,
   widget_factory: Arc<WidgetFactory>,
 ) -> anyhow::Result<()> {
-  app.handle().plugin(tauri_plugin_single_instance::init(
-    move |_, args, _| {
+  app
+    .handle()
+    .plugin(tauri_plugin_single_instance::init(move |_, args, _| {
       let widget_factory = widget_factory.clone();
 
       task::spawn(async move {
@@ -307,8 +298,7 @@ fn setup_single_instance(
           error!("{:?}", err);
         }
       });
-    },
-  ))?;
+    }))?;
 
   Ok(())
 }
@@ -347,9 +337,7 @@ async fn open_widgets_by_cli_command(
         )
         .await
     }
-    CliCommand::Startup(_) | CliCommand::Empty => {
-      widget_factory.startup().await
-    }
+    CliCommand::Startup(_) | CliCommand::Empty => widget_factory.startup().await,
     _ => unreachable!(),
   };
 

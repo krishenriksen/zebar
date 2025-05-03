@@ -1,18 +1,18 @@
-use windows::Win32::{
-  Foundation::{HWND},
-  System::LibraryLoader::GetModuleHandleW,
-  UI::{
-      Accessibility::{SetWinEventHook, UnhookWinEvent},
-      WindowsAndMessaging::{
-          GetWindowTextLengthW, GetWindowTextW, SetForegroundWindow,
-          EVENT_SYSTEM_FOREGROUND, MSG, GetMessageW, TranslateMessage, DispatchMessageW,
-      },
-  },
-};
-
 use std::sync::Mutex;
+
 use lazy_static::lazy_static;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use windows::Win32::{
+  Foundation::HWND,
+  System::LibraryLoader::GetModuleHandleW,
+  UI::{
+    Accessibility::{SetWinEventHook, UnhookWinEvent},
+    WindowsAndMessaging::{
+      DispatchMessageW, GetMessageW, GetWindowTextLengthW, GetWindowTextW, SetForegroundWindow,
+      TranslateMessage, EVENT_SYSTEM_FOREGROUND, MSG,
+    },
+  },
+};
 
 /// Represents a foreground window event.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -29,8 +29,7 @@ pub struct Window {
 }
 
 lazy_static! {
-  static ref EVENT_TX: Mutex<Option<UnboundedSender<WindowEvent>>> =
-    Mutex::new(None);
+  static ref EVENT_TX: Mutex<Option<UnboundedSender<WindowEvent>>> = Mutex::new(None);
 }
 
 impl Window {
@@ -81,26 +80,26 @@ impl Window {
   fn start_window_event_listener() {
     std::thread::spawn(move || unsafe {
       let hook_foreground = SetWinEventHook(
-          EVENT_SYSTEM_FOREGROUND,
-          EVENT_SYSTEM_FOREGROUND,
-          GetModuleHandleW(None).unwrap(),
-          Some(event_callback),
-          0,
-          0,
-          0,
+        EVENT_SYSTEM_FOREGROUND,
+        EVENT_SYSTEM_FOREGROUND,
+        GetModuleHandleW(None).unwrap(),
+        Some(event_callback),
+        0,
+        0,
+        0,
       );
 
       if hook_foreground.0.is_null() {
-          eprintln!("Failed to set foreground event hook");
-          return;
+        eprintln!("Failed to set foreground event hook");
+        return;
       }
 
       println!("Listening for window events...");
 
       let mut msg = MSG::default();
       while GetMessageW(&mut msg, HWND(std::ptr::null_mut()), 0, 0).into() {
-          let _ = TranslateMessage(&msg);
-          DispatchMessageW(&msg);
+        let _ = TranslateMessage(&msg);
+        DispatchMessageW(&msg);
       }
 
       let _ = UnhookWinEvent(hook_foreground);
@@ -138,6 +137,12 @@ unsafe extern "system" fn event_callback(
 
   if copied_length > 0 {
     let window_title = String::from_utf16_lossy(&buffer[..copied_length as usize]);
+
+    // Ignore events with the specific title
+    if window_title == "Zebar - macos/macos" {
+      println!("Ignored window with title: {:?}", window_title);
+      return;
+    }
 
     // Access the static `EVENT_TX` to send the event
     if let Some(sender) = EVENT_TX.lock().unwrap().as_ref() {

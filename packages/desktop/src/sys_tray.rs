@@ -5,10 +5,7 @@ use base64::prelude::*;
 use tauri::{
   image::Image,
   menu::{CheckMenuItem, Menu, MenuBuilder, Submenu, SubmenuBuilder},
-  tray::{
-    MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder,
-    TrayIconEvent,
-  },
+  tray::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent},
   AppHandle, Manager, WebviewUrl, WebviewWindowBuilder, Wry,
 };
 use tokio::task;
@@ -222,11 +219,8 @@ impl SysTray {
     let widget_states = self.widget_factory.states_by_path().await;
     let startup_configs = self.config.startup_configs_by_path().await?;
 
-    let configs_menu = self.create_configs_menu(
-      &widget_configs,
-      &widget_states,
-      &startup_configs,
-    )?;
+    let configs_menu =
+      self.create_configs_menu(&widget_configs, &widget_states, &startup_configs)?;
 
     let mut tray_menu = MenuBuilder::new(&self.app_handle)
       .text(MenuEvent::OpenSettings, "Open settings")
@@ -248,12 +242,8 @@ impl SysTray {
     if !widget_states.is_empty() {
       for (config_path, config) in &widget_configs {
         if let Some(_) = widget_states.get(config_path) {
-          let config_menu = self.create_config_menu(
-            &config_path,
-            config,
-            &widget_states,
-            &startup_configs,
-          )?;
+          let config_menu =
+            self.create_config_menu(&config_path, config, &widget_states, &startup_configs)?;
 
           tray_menu = tray_menu.item(&config_menu);
         }
@@ -268,17 +258,10 @@ impl SysTray {
     #[cfg(windows)]
     {
       use tauri::menu::ContextMenu;
-      use windows::Win32::UI::WindowsAndMessaging::{
-        SetMenuDefaultItem, HMENU,
-      };
+      use windows::Win32::UI::WindowsAndMessaging::{SetMenuDefaultItem, HMENU};
 
-      let _ = unsafe {
-        SetMenuDefaultItem(
-          HMENU(tray_menu.hpopupmenu()? as _),
-          0 as u32,
-          true.into(),
-        )
-      };
+      let _ =
+        unsafe { SetMenuDefaultItem(HMENU(tray_menu.hpopupmenu()? as _), 0 as u32, true.into()) };
     }
 
     Ok(tray_menu)
@@ -302,16 +285,12 @@ impl SysTray {
           widget_factory.clear_cache();
           config.reload().await
         }
-        MenuEvent::OpenSettings => {
-          Self::open_settings_window(&app_handle, None)
-        }
+        MenuEvent::OpenSettings => Self::open_settings_window(&app_handle, None),
         MenuEvent::Exit => {
           app_handle.exit(0);
           Ok(())
         }
-        MenuEvent::EditWidget { path } => {
-          Self::open_settings_window(&app_handle, Some(&path))
-        }
+        MenuEvent::EditWidget { path } => Self::open_settings_window(&app_handle, Some(&path)),
         MenuEvent::ToggleWidgetPreset {
           enable,
           path,
@@ -359,18 +338,13 @@ impl SysTray {
 
     match &settings_window {
       None => {
-        WebviewWindowBuilder::new(
-          app_handle,
-          "settings",
-          WebviewUrl::App(route.into()),
-        )
-        .title("Settings - Zebar")
-        .focused(true)
-        .visible(true)
-        .inner_size(900., 600.)
-        .visible(true)
-        .build()
-        .context("Failed to build the settings window.")?;
+        WebviewWindowBuilder::new(app_handle, "settings", WebviewUrl::App(route.into()))
+          .title("Settings - Zebar")
+          .focused(true)
+          .visible(true)
+          .inner_size(900., 600.)
+          .build()
+          .context("Failed to build the settings window.")?;
 
         Ok(())
       }
@@ -395,17 +369,12 @@ impl SysTray {
     widget_states: &HashMap<PathBuf, Vec<WidgetState>>,
     startup_configs: &HashMap<PathBuf, StartupConfig>,
   ) -> anyhow::Result<Submenu<Wry>> {
-    let mut configs_menu =
-      SubmenuBuilder::new(&self.app_handle, "Widget configs");
+    let mut configs_menu = SubmenuBuilder::new(&self.app_handle, "Widget configs");
 
     // Add each widget config to the menu.
     for (config_path, widget_config) in widget_configs {
-      let config_menu = self.create_config_menu(
-        config_path,
-        &widget_config,
-        widget_states,
-        startup_configs,
-      )?;
+      let config_menu =
+        self.create_config_menu(config_path, &widget_config, widget_states, startup_configs)?;
 
       configs_menu = configs_menu.item(&config_menu);
     }
@@ -432,13 +401,12 @@ impl SysTray {
       }
     };
 
-    let mut presets_menu = SubmenuBuilder::new(&self.app_handle, label)
-      .text(
-        MenuEvent::EditWidget {
-          path: config_path.clone(),
-        },
-        "Edit",
-      );
+    let mut presets_menu = SubmenuBuilder::new(&self.app_handle, label).text(
+      MenuEvent::EditWidget {
+        path: config_path.clone(),
+      },
+      "Edit",
+    );
 
     // Add each widget config to the menu.
     for preset in &widget_config.presets {
@@ -450,10 +418,7 @@ impl SysTray {
           .map(|states| {
             states
               .iter()
-              .filter(|state| {
-                state.open_options
-                  == WidgetOpenOptions::Preset(preset.name.clone())
-              })
+              .filter(|state| state.open_options == WidgetOpenOptions::Preset(preset.name.clone()))
               .count()
           })
           .unwrap_or(0),
