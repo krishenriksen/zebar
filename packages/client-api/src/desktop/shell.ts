@@ -42,6 +42,34 @@ export async function setForegroundWindow(hwnd: number): Promise<void> {
 }
 
 /**
+ *  Show a menu at the specified position.
+ */
+export async function showMenu(
+  name: string,
+  index: number,
+  subItems: { name: string; action: string; hwnd: number; icon?: string; key?: string }[],
+  buttonX: number,
+  monitorY: number,
+): Promise<void> {
+  return await desktopCommands.showMenu(
+    name,
+    index,
+    subItems,
+    buttonX,
+    monitorY,
+  );
+}
+
+/**
+ * Close menu based on application.
+ *
+ * @throws - If the operation fails.
+ */
+export async function hideMenu(): Promise<void> {
+  return await desktopCommands.hideMenu();
+}
+
+/**
  * Executes a shell command and waits for completion.
  *
  * @example

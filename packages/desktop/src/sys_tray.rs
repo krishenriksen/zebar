@@ -343,6 +343,7 @@ impl SysTray {
           .focused(true)
           .visible(true)
           .inner_size(900., 600.)
+          .skip_taskbar(true)
           .build()
           .context("Failed to build the settings window.")?;
 

@@ -22,12 +22,14 @@ export const desktopCommands = {
   shellWrite,
   shellKill,
   setForegroundWindow,
+  showMenu,
+  hideMenu,
 };
 
 export type ProviderFunction =
   | AudioFunction
   | MediaFunction
-  | SystrayFunction
+  | SystrayFunction;
 
 export interface AudioFunction {
   type: 'audio';
@@ -142,6 +144,35 @@ function shellKill(processId: number): Promise<void> {
 
 function setForegroundWindow(hwnd: number): Promise<void> {
   return invoke<void>('set_foreground_window', { hwnd });
+}
+
+/**
+ *  Show a menu at the specified position.
+ * @param name
+ * @param index
+ * @param subItems
+ * @param buttonX
+ * @param monitorY
+ * @returns
+ */
+function showMenu(
+  name: string,
+  index: number,
+  subItems: { name: string; action: string, hwnd: number }[],
+  buttonX: number,
+  monitorY: number,
+): Promise<void> {
+  return invoke<void>('show_menu', {
+    name,
+    index,
+    subItems,
+    buttonX,
+    monitorY,
+  });
+}
+
+function hideMenu(): Promise<void> {
+  return invoke<void>('hide_menu');
 }
 
 export interface ShellCommandOptions {

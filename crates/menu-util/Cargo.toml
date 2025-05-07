@@ -1,8 +1,8 @@
 [package]
-name = "window-util"
+name = "menu-util"
 version = "0.0.0"
 authors = ["Kris Henriksen", "Glzr Software Pte. Ltd."]
-description = "A library for interacting with Windows windows on Windows 10 and 11."
+description = "A library for Windows 10 and 11 for creating dropdown menus."
 license = "MIT"
 repository = "https://github.com/krishenriksen/zebar"
 edition = "2021"
@@ -12,15 +12,10 @@ path = "src/lib.rs"
 
 [dependencies]
 serde = { workspace = true }
-tokio = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-thiserror = { workspace = true }
-uuid = { workspace = true }
 anyhow = "1.0.98"
-lazy_static = "1.5.0"
 tauri = "2.5.1"
+serde_json.workspace = true
+tokio.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-core = { workspace = true }
 windows = { workspace = true }

@@ -1,7 +1,8 @@
 use anyhow::Context;
 use tauri::{PhysicalPosition, PhysicalSize, Runtime, Window};
-use windows::Win32::UI::WindowsAndMessaging::{
-  SetWindowLongPtrW, GWL_EXSTYLE, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW,
+use windows::Win32::{
+  Foundation::HWND,
+  UI::WindowsAndMessaging::{SetWindowLongPtrW, GWL_EXSTYLE, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW},
 };
 
 use super::app_bar;
@@ -22,18 +23,17 @@ pub trait WindowExtWindows {
 
 impl<R: Runtime> WindowExtWindows for Window<R> {
   fn set_tool_window(&self, enable: bool) -> anyhow::Result<()> {
-    let handle = self.hwnd().context("Failed to get window handle.")?;
+    let hwnd = self.hwnd().context("Failed to get window handle.")?;
 
-    // Normally one would add the `WS_EX_TOOLWINDOW` style and remove the
-    // `WS_EX_APPWINDOW` style to hide a window from the taskbar. Oddly
-    // enough, this was causing the `WS_EX_APPWINDOW` style to be
-    // preserved unless fully overwriting the extended window style.
     unsafe {
-      match enable {
-        true => SetWindowLongPtrW(handle, GWL_EXSTYLE, WS_EX_TOOLWINDOW.0 as isize),
-        false => SetWindowLongPtrW(handle, GWL_EXSTYLE, WS_EX_APPWINDOW.0 as isize),
-      }
-    };
+      let ex_style = if enable {
+        WS_EX_TOOLWINDOW.0 as isize
+      } else {
+        WS_EX_APPWINDOW.0 as isize
+      };
+
+      SetWindowLongPtrW(HWND(hwnd.0), GWL_EXSTYLE, ex_style);
+    }
 
     Ok(())
   }

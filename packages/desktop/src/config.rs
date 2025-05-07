@@ -271,6 +271,11 @@ pub struct Config {
 }
 
 impl Config {
+  // Method to retrieve AppHandle
+  pub fn app_handle(&self) -> &AppHandle {
+    &self.app_handle
+  }
+
   /// Reads the config files within the config directory.
   ///
   /// Returns a new `Config` instance.

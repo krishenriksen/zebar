@@ -21,6 +21,7 @@ gen
 *.pem
 *.env
 examples/settings.json
+examples/macos/assets/*
 
 # Debug
 npm-debug.log*

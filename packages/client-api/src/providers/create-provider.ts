@@ -71,7 +71,7 @@ export interface ProviderConfigMap {
   window: WindowProviderConfig;
 }
 
-export interface ProviderMap {  
+export interface ProviderMap {
   audio: AudioProvider;
   battery: BatteryProvider;
   cpu: CpuProvider;
@@ -112,7 +112,7 @@ export function createProvider<T extends ProviderConfig>(
     case 'cpu':
       return createCpuProvider(config) as any;
     case 'gpu':
-      return createGpuProvider(config) as any;      
+      return createGpuProvider(config) as any;
     case 'date':
       return createDateProvider(config) as any;
     case 'media':
@@ -124,7 +124,7 @@ export function createProvider<T extends ProviderConfig>(
     case 'systray':
       return createSystrayProvider(config) as any;
     case 'window':
-      return createWindowProvider(config) as any;      
+      return createWindowProvider(config) as any;
     default:
       throw new Error('Not a supported provider type.');
   }

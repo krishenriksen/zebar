@@ -6,6 +6,8 @@ export {
   shellExec,
   shellSpawn,
   setForegroundWindow,
+  showMenu,
+  hideMenu,
   type Widget,
   type WidgetWindow,
 } from './desktop';

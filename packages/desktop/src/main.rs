@@ -23,6 +23,8 @@ use crate::{
   widget_factory::{WidgetFactory, WidgetOpenOptions},
 };
 
+use menu_util::initialize_menu_window;
+
 mod asset_server;
 mod cli;
 mod commands;
@@ -54,6 +56,12 @@ async fn main() -> anyhow::Result<()> {
 
   let app = tauri::Builder::default()
     .setup(|app| {
+      // Initialize the menu window
+      let app_handle = app.handle();
+      if let Err(err) = initialize_menu_window(&app_handle, 0, 0, 300, 400) {
+          eprintln!("Failed to initialize menu: {}", err);
+      }
+
       task::block_in_place(|| {
         block_on(async move {
           let cli = Cli::parse();
@@ -95,6 +103,8 @@ async fn main() -> anyhow::Result<()> {
       commands::shell_write,
       commands::shell_kill,
       commands::set_foreground_window,
+      commands::show_menu,
+      commands::hide_menu,
     ])
     .build(tauri::generate_context!())?;
 

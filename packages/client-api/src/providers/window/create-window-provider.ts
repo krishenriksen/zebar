@@ -18,15 +18,12 @@ export function createWindowProvider(
   const mergedConfig = windowProviderConfigSchema.parse(config);
 
   return createBaseProvider(mergedConfig, async queue => {
-    return onProviderEmit<WindowOutput>(
-      mergedConfig,
-      ({ result }) => {
-        if ('error' in result) {
-          queue.error(result.error);
-        } else {
-          queue.output(result.output);
-        }
-      },
-    );
+    return onProviderEmit<WindowOutput>(mergedConfig, ({ result }) => {
+      if ('error' in result) {
+        queue.error(result.error);
+      } else {
+        queue.output(result.output);
+      }
+    });
   });
 }

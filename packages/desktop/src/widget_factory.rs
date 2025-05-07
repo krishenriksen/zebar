@@ -11,8 +11,8 @@ use anyhow::{bail, Context};
 use base64::prelude::*;
 use serde::Serialize;
 use tauri::{
-  self, path::BaseDirectory, AppHandle, Manager, PhysicalPosition,
-  PhysicalSize, WebviewUrl, WebviewWindowBuilder, WindowEvent,
+  self, path::BaseDirectory, AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl,
+  WebviewWindowBuilder, WindowEvent,
 };
 use tokio::{
   sync::{broadcast, Mutex},
@@ -27,10 +27,7 @@ use crate::common::windows::{remove_app_bar, WindowExtWindows};
 use crate::{
   asset_server::create_init_url,
   common::PathExt,
-  config::{
-    AnchorPoint, Config, DockConfig, DockEdge, WidgetConfig,
-    WidgetPlacement,
-  },
+  config::{AnchorPoint, Config, DockConfig, DockEdge, WidgetConfig, WidgetPlacement},
   monitor_state::{Monitor, MonitorState},
 };
 
@@ -183,9 +180,7 @@ impl WidgetFactory {
       .config
       .widget_config_by_path(config_path)
       .await
-      .with_context(|| {
-        format!("No config found at path '{}'.", config_path.display())
-      })?;
+      .with_context(|| format!("No config found at path '{}'.", config_path.display()))?;
 
     // No-op if preset is already open.
     if let WidgetOpenOptions::Preset(_) = open_options {
@@ -195,10 +190,7 @@ impl WidgetFactory {
           .lock()
           .await
           .values()
-          .find(|state| {
-            state.config_path == config_path
-              && state.open_options == *open_options
-          })
+          .find(|state| state.config_path == config_path && state.open_options == *open_options)
           .is_some()
       };
 
@@ -227,8 +219,7 @@ impl WidgetFactory {
     };
 
     for coordinates in self.widget_coordinates(placement).await {
-      let new_count =
-        self.widget_count.fetch_add(1, Ordering::Relaxed) + 1;
+      let new_count = self.widget_count.fetch_add(1, Ordering::Relaxed) + 1;
 
       // Use running widget count as a unique label for the Tauri window.
       let widget_id = format!("widget-{}", new_count);
@@ -239,8 +230,7 @@ impl WidgetFactory {
         config_path.display()
       );
 
-      let parent_dir =
-        config_path.parent().context("No parent directory.")?;
+      let parent_dir = config_path.parent().context("No parent directory.")?;
 
       let html_path = parent_dir.join(&widget_config.html_path);
 
@@ -252,9 +242,7 @@ impl WidgetFactory {
         )
       }
 
-      let webview_url = WebviewUrl::External(
-        create_init_url(&parent_dir, &html_path).await?,
-      );
+      let webview_url = WebviewUrl::External(create_init_url(&parent_dir, &html_path).await?);
 
       let mut state = WidgetState {
         id: widget_id.clone(),
@@ -267,48 +255,36 @@ impl WidgetFactory {
 
       // Widgets from the same top-level directory share their browser
       // cache (i.e. `localStorage`, `sessionStorage`, SW cache, etc.).
-      let cache_id =
-        BASE64_STANDARD.encode(parent_dir.to_unicode_string());
+      let cache_id = BASE64_STANDARD.encode(parent_dir.to_unicode_string());
 
-      let window = WebviewWindowBuilder::new(
-        &self.app_handle,
-        widget_id.clone(),
-        webview_url,
-      )
-      .title(format!(
-        "Zebar - {}",
-        self.config.formatted_widget_path(&config_path)
-      ))
-      .focused(widget_config.focused)
-      .skip_taskbar(!widget_config.shown_in_taskbar)
-      .visible_on_all_workspaces(true)
-      .transparent(widget_config.transparent)
-      .shadow(false)
-      .decorations(false)
-      .resizable(widget_config.resizable)
-      .initialization_script(&self.initialization_script(&state)?)
-      .data_directory(
-        // TODO: Add this as an ext method on the Tauri window.
-        self
-          .app_handle
-          .path()
-          .resolve(
-            format!(".glzr/zebar/tmp-{}", cache_id),
-            BaseDirectory::Home,
-          )
-          .context("Unable to get home directory.")
-          .unwrap(),
-      )
-      .build()?;
+      let window = WebviewWindowBuilder::new(&self.app_handle, widget_id.clone(), webview_url)
+        .title(format!(
+          "Zebar - {}",
+          self.config.formatted_widget_path(&config_path)
+        ))
+        .focused(widget_config.focused)
+        .skip_taskbar(!widget_config.shown_in_taskbar)
+        .visible_on_all_workspaces(true)
+        .transparent(widget_config.transparent)
+        .shadow(false)
+        .decorations(false)
+        .resizable(widget_config.resizable)
+        .initialization_script(&self.initialization_script(&state)?)
+        .data_directory(
+          // TODO: Add this as an ext method on the Tauri window.
+          self
+            .app_handle
+            .path()
+            .resolve(format!(".glzr/zebar/tmp-{}", cache_id), BaseDirectory::Home)
+            .context("Unable to get home directory.")
+            .unwrap(),
+        )
+        .build()?;
 
       // Widget coordinates might be modified when docked to an edge.
       let (size, position) = match placement.dock_to_edge.enabled {
         false => (coordinates.size, coordinates.position),
-        true => self.dock_to_edge(
-          &window,
-          &placement.dock_to_edge,
-          &coordinates,
-        )?,
+        true => self.dock_to_edge(&window, &placement.dock_to_edge, &coordinates)?,
       };
 
       info!("Positioning widget to {:?} {:?}", size, position);
@@ -343,8 +319,7 @@ impl WidgetFactory {
       #[cfg(target_os = "windows")]
       {
         state.window_handle = {
-          let handle =
-            window.hwnd().context("Failed to get window handle.")?;
+          let handle = window.hwnd().context("Failed to get window handle.")?;
 
           Some(handle.0 as isize)
         };
@@ -418,8 +393,8 @@ impl WidgetFactory {
       // Prevent the reserved amount from exceeding 50% of the monitor
       // size. This maximum is arbitrary but should be sufficient for
       // most cases.
-      let reserved_length = (offset + window_length + window_margin)
-        .clamp(0, monitor_length as i32 / 2);
+      let reserved_length =
+        (offset + window_length + window_margin).clamp(0, monitor_length as i32 / 2);
 
       let reserve_size = if edge.is_horizontal() {
         PhysicalSize::new(coords.monitor.width as i32, reserved_length)
@@ -428,13 +403,10 @@ impl WidgetFactory {
       };
 
       let reserve_position = match edge {
-        DockEdge::Top | DockEdge::Left => {
-          PhysicalPosition::new(coords.monitor.x, coords.monitor.y)
-        }
+        DockEdge::Top | DockEdge::Left => PhysicalPosition::new(coords.monitor.x, coords.monitor.y),
         DockEdge::Bottom => PhysicalPosition::new(
           coords.monitor.x,
-          coords.monitor.y + coords.monitor.height as i32
-            - reserved_length,
+          coords.monitor.y + coords.monitor.height as i32 - reserved_length,
         ),
         DockEdge::Right => PhysicalPosition::new(
           coords.monitor.x + coords.monitor.width as i32 - reserved_length,
@@ -442,10 +414,11 @@ impl WidgetFactory {
         ),
       };
 
-      let (allocated_size, allocated_position) = window
-        .as_ref()
-        .window()
-        .allocate_app_bar(reserve_size, reserve_position, edge)?;
+      let (allocated_size, allocated_position) =
+        window
+          .as_ref()
+          .window()
+          .allocate_app_bar(reserve_size, reserve_position, edge)?;
 
       // Adjust the size to account for the window margin.
       let final_size = if edge.is_horizontal() {
@@ -465,8 +438,7 @@ impl WidgetFactory {
       let final_position = match edge {
         DockEdge::Bottom => PhysicalPosition::new(
           allocated_position.x,
-          allocated_position.y
-            + (allocated_size.height - final_size.height),
+          allocated_position.y + (allocated_size.height - final_size.height),
         ),
         DockEdge::Right => PhysicalPosition::new(
           allocated_position.x + (allocated_size.width - final_size.width),
@@ -502,12 +474,8 @@ impl WidgetFactory {
     Ok(())
   }
 
-  fn initialization_script(
-    &self,
-    state: &WidgetState,
-  ) -> anyhow::Result<String> {
-    let state_script =
-      format!("window.__ZEBAR_STATE={};", serde_json::to_string(state)?);
+  fn initialization_script(&self, state: &WidgetState) -> anyhow::Result<String> {
+    let state_script = format!("window.__ZEBAR_STATE={};", serde_json::to_string(state)?);
 
     let sw_script = include_str!("../resources/initialization-script.js");
 
@@ -538,9 +506,7 @@ impl WidgetFactory {
           // Ensure appbar space is deallocated on close.
           #[cfg(target_os = "windows")]
           {
-            if let Some(window_handle) =
-              state.and_then(|state| state.window_handle)
-            {
+            if let Some(window_handle) = state.and_then(|state| state.window_handle) {
               let _ = remove_app_bar(window_handle);
             }
           }
@@ -557,10 +523,7 @@ impl WidgetFactory {
   }
 
   /// Returns coordinates for window placement based on the given config.
-  async fn widget_coordinates(
-    &self,
-    placement: &WidgetPlacement,
-  ) -> Vec<WidgetCoordinates> {
+  async fn widget_coordinates(&self, placement: &WidgetPlacement) -> Vec<WidgetCoordinates> {
     let mut coordinates = vec![];
 
     let monitors = self
@@ -591,9 +554,7 @@ impl WidgetFactory {
           monitor.x + (monitor_width / 2) - (window_size.width / 2),
           monitor.y,
         ),
-        AnchorPoint::TopRight => {
-          (monitor.x + monitor_width - window_size.width, monitor.y)
-        }
+        AnchorPoint::TopRight => (monitor.x + monitor_width - window_size.width, monitor.y),
         AnchorPoint::CenterLeft => (
           monitor.x,
           monitor.y + (monitor_height / 2) - (window_size.height / 2),
@@ -606,9 +567,7 @@ impl WidgetFactory {
           monitor.x + monitor_width - window_size.width,
           monitor.y + (monitor_height / 2) - (window_size.height / 2),
         ),
-        AnchorPoint::BottomLeft => {
-          (monitor.x, monitor.y + monitor_height - window_size.height)
-        }
+        AnchorPoint::BottomLeft => (monitor.x, monitor.y + monitor_height - window_size.height),
         AnchorPoint::BottomCenter => (
           monitor.x + (monitor_width / 2) - (window_size.width / 2),
           monitor.y + monitor_height - window_size.height,
@@ -627,8 +586,7 @@ impl WidgetFactory {
         .offset_y
         .to_px_scaled(monitor_height, monitor.scale_factor);
 
-      let window_position =
-        PhysicalPosition::new(anchor_x + offset_x, anchor_y + offset_y);
+      let window_position = PhysicalPosition::new(anchor_x + offset_x, anchor_y + offset_y);
 
       coordinates.push(WidgetCoordinates {
         size: window_size,
@@ -655,10 +613,7 @@ impl WidgetFactory {
   }
 
   /// Closes all widgets with the given config path.
-  pub async fn _stop_by_path(
-    &self,
-    config_path: &PathBuf,
-  ) -> anyhow::Result<()> {
+  pub async fn _stop_by_path(&self, config_path: &PathBuf) -> anyhow::Result<()> {
     let widget_states = self.states_by_path().await;
 
     let found_widget_states = widget_states
@@ -701,17 +656,13 @@ impl WidgetFactory {
   /// Relaunches all currently open widgets.
   #[allow(dead_code)]
   pub async fn relaunch_all(&self) -> anyhow::Result<()> {
-    let widget_ids =
-      { self.widget_states.lock().await.keys().cloned().collect() };
+    let widget_ids = { self.widget_states.lock().await.keys().cloned().collect() };
 
     self.relaunch_by_ids(&widget_ids).await
   }
 
   /// Relaunches widgets with the given widget ID's.
-  pub async fn relaunch_by_ids(
-    &self,
-    widget_ids: &Vec<String>,
-  ) -> anyhow::Result<()> {
+  pub async fn relaunch_by_ids(&self, widget_ids: &Vec<String>) -> anyhow::Result<()> {
     let changed_states = {
       let mut widget_states = self.widget_states.lock().await;
 
@@ -741,10 +692,7 @@ impl WidgetFactory {
       let _ = self.stop_by_id(&widget_state.id);
 
       self
-        .start_widget(
-          &widget_state.config_path,
-          &widget_state.open_options,
-        )
+        .start_widget(&widget_state.config_path, &widget_state.open_options)
         .await?;
     }
 
@@ -752,10 +700,7 @@ impl WidgetFactory {
   }
 
   /// Relaunches widgets with the given config paths.
-  pub async fn relaunch_by_paths(
-    &self,
-    config_paths: &Vec<PathBuf>,
-  ) -> anyhow::Result<()> {
+  pub async fn relaunch_by_paths(&self, config_paths: &Vec<PathBuf>) -> anyhow::Result<()> {
     let widget_ids = {
       self
         .widget_states
@@ -796,19 +741,19 @@ impl WidgetFactory {
   }
 
   /// Returns widget states grouped by their config paths.
-  pub async fn states_by_path(
-    &self,
-  ) -> HashMap<PathBuf, Vec<WidgetState>> {
-    self.widget_states.lock().await.values().fold(
-      HashMap::new(),
-      |mut acc, state| {
+  pub async fn states_by_path(&self) -> HashMap<PathBuf, Vec<WidgetState>> {
+    self
+      .widget_states
+      .lock()
+      .await
+      .values()
+      .fold(HashMap::new(), |mut acc, state| {
         acc
           .entry(state.config_path.clone())
           .or_insert_with(Vec::new)
           .push(state.clone());
 
         acc
-      },
-    )
+      })
   }
 }

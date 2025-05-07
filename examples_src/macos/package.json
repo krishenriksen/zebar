@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "",
   "scripts": {
-    "build": "vite build && cp macos.zebar.json ./dist/ && cp -R cursor icons ./dist/assets/ && mkdir -p ../../examples/macos/ && cp -R dist/* ../../examples/macos/",
+    "build": "vite build && ./build.sh",
     "dev": "vite build --watch",
     "format": "prettier --write . && pnpm run -r format",
     "lint": "prettier --check . && pnpm run -r lint"

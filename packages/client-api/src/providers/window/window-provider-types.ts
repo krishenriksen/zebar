@@ -4,10 +4,7 @@ export interface WindowProviderConfig {
   type: 'window';
 }
 
-export type WindowProvider = Provider<
-  WindowProviderConfig,
-  WindowOutput
->;
+export type WindowProvider = Provider<WindowProviderConfig, WindowOutput>;
 
 export interface WindowOutput {
   title: string;

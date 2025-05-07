@@ -1,6 +1,7 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
-use tauri::{State, Window};
+use menu_util::{hide_menu as hideMenu, show_menu as showMenu};
+use tauri::{AppHandle, State, Window};
 #[cfg(target_os = "windows")]
 use window_util::Window as UtilWindow;
 
@@ -206,5 +207,52 @@ pub fn set_foreground_window(hwnd: isize) -> Result<String, String> {
       "Failed to set window {} to the foreground: {}",
       hwnd, err
     )),
+  }
+}
+
+#[tauri::command]
+pub fn show_menu(
+  name: String,
+  index: usize,
+  sub_items: Vec<(String, String, isize, Option<String>, Option<String>)>,
+  button_x: i32,
+  monitor_y: i32,
+  config: State<'_, Arc<Config>>,
+) -> Result<String, String> {
+  let app_handle: &AppHandle = config.app_handle();
+
+  #[cfg(target_os = "windows")]
+  {
+    match showMenu(
+      app_handle, name, index, sub_items, button_x, monitor_y,
+    ) {
+      Ok(_) => Ok(format!("Successfully shown menu")),
+      Err(err) => Err(format!("Failed to show menu: {}", err)),
+    }
+  }
+
+  #[cfg(not(target_os = "windows"))]
+  {
+    // Provide a fallback or error message for other platforms
+    Err("Menu functionality is only available on Windows.".to_string())
+  }
+}
+
+#[tauri::command]
+pub fn hide_menu(config: State<'_, Arc<Config>>) -> Result<String, String> {
+  let app_handle: &AppHandle = config.app_handle();
+
+  #[cfg(target_os = "windows")]
+  {
+    match hideMenu(app_handle) {
+      Ok(_) => Ok(format!("Successfully shown menu")),
+      Err(err) => Err(format!("Failed to show menu: {}", err)),
+    }
+  }
+
+  #[cfg(not(target_os = "windows"))]
+  {
+    // Provide a fallback or error message for other platforms
+    Err("Menu functionality is only available on Windows.".to_string())
   }
 }

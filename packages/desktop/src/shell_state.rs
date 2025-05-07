@@ -195,9 +195,16 @@ impl ShellState {
     program: &str,
     args: ShellCommandArgs,
   ) -> anyhow::Result<()> {
+    // Treat "dropdown" as if it were "macos"
+    let effective_widget_id = if widget_id == "macos" {
+      "widget-1"
+    } else {
+      widget_id
+    };
+
     let widget = self
       .widget_factory
-      .state_by_id(widget_id)
+      .state_by_id(effective_widget_id)
       .await
       .with_context(|| format!("Widget with ID '{widget_id}' not found."))?;
 
