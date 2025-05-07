@@ -13,16 +13,10 @@ use tauri::{
   AppHandle, WebviewWindowBuilder, WebviewUrl, Manager, window::Color,
 };
 
-pub fn initialize_menu_window(
-  app_handle: &AppHandle,
-  button_x: i32,
-  monitor_y: i32,
-  menu_width: u32,
-  total_height: i32,
-) -> anyhow::Result<()> { 
+pub fn initialize_menu_window(app_handle: &AppHandle) -> anyhow::Result<()> { 
   if app_handle.get_webview_window("macos").is_none() {
     let app_handle_clone = app_handle.clone(); // Clone to move into the thread.
-    // Use a separate thread for window creation.  This is crucial.
+    // Use a separate thread for window creation. This is crucial.
     task::spawn(async move {
       if let Err(err) = WebviewWindowBuilder::new(
         &app_handle_clone,
@@ -32,8 +26,8 @@ pub fn initialize_menu_window(
       .title("Dropdown - Zebar") // Include Zebar in the title so it can be ignored in the event callback
       .focused(true)
       .visible(false)
-      .position(button_x as f64, monitor_y as f64 + 28.0)
-      .inner_size(menu_width as f64, total_height as f64)
+      .position(0.0, 0.0)
+      .inner_size(100.0, 100.0)
       .resizable(false)
       .decorations(false)
       .skip_taskbar(true)
@@ -44,6 +38,8 @@ pub fn initialize_menu_window(
       }
     });
   }
+
+  hide_menu(app_handle)?;
 
   Ok(())
 }
@@ -68,63 +64,39 @@ pub fn show_menu(
     return Err(anyhow::anyhow!("No valid menu items provided"));
   }
 
+  hide_menu(app_handle)?;
+
+  update_menu_items(
+    app_handle,
+    sub_items
+  )?;  
+
   // Calculate the width dynamically based on the longest menu item and key
   let font_size = 14.0;
-  let padding = 80.0;
   let max_text_width = filtered_items
       .iter()
       .map(|(item_name, _, _, _, key)| {
           let text_width = item_name.len() as f64 * font_size * 0.7; // Approximate width of text
           let key_width = key.as_ref().map_or(0.0, |k| k.len() as f64 * font_size * 0.5); // Approximate width of key
-          text_width + key_width + padding
+          text_width + key_width
       })
       .fold(0.0, f64::max); // Get the maximum width
-  let menu_width = max_text_width.ceil() as u32; // Round up to the nearest integer
+  let width = (max_text_width.ceil() as u32) + 80;
 
   // Calculate the height dynamically based on the number of sub-items
-  let item_height = 39; // Approximate height of each menu item in pixels
-  let total_height = (filtered_items.len() as f64 * item_height as f64).ceil() as i32;
+  let item_height = 40; // Approximate height of each menu item in pixels
+  let height = (filtered_items.len() as f64 * item_height as f64).ceil() as u32;
 
-  hide_menu(app_handle)?;
-
-  update_menu_items(
-    app_handle,
-    index,
-    sub_items,
-    button_x,
-    monitor_y,
-    menu_width,
-    total_height,
-  )?;
+  resize_menu(app_handle, index, button_x, monitor_y, width, height)?;
 
   Ok(())
 }
 
 fn update_menu_items(
   app_handle: &AppHandle,
-  index: usize,
   sub_items: Vec<(String, String, isize, Option<String>, Option<String>)>,
-  button_x: i32,
-  monitor_y: i32,
-  menu_width: u32,
-  total_height: i32,
 ) -> anyhow::Result<()> {
-  if let Some(existing_window) = app_handle.get_webview_window("macos") {
-    // do not show in taskbar
-    unsafe {
-      if let Ok(app_hwnd) = existing_window.hwnd() {
-        SetWindowLongPtrW(HWND(app_hwnd.0), GWL_EXSTYLE, WS_EX_TOOLWINDOW.0 as isize);
-      }
-    }
-
-    let adjusted_left = button_x + if index == 0 { 12 } else { index as i32 * 10 };
-    let _ = existing_window.set_position(tauri::PhysicalPosition::new(adjusted_left, monitor_y + 35));
-
-    let _ = existing_window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
-      width: menu_width,
-      height: total_height as u32,
-    }));
-
+  if let Some(existing_window) = app_handle.get_webview_window("macos") {   
     // Serialize the items into JSON
     let items_json = serde_json::to_string(
         &sub_items
@@ -142,12 +114,7 @@ fn update_menu_items(
     )
     .unwrap_or_else(|_| "[]".to_string());
 
-    let js_code = format!("window.updateMenuItems({});", items_json);    
-
-    // Call the JavaScript function to update the items
-    let _ = existing_window.eval(&js_code);
-
-    existing_window.show()?;
+    existing_window.eval(format!("window.updateMenuItems({});", items_json))?;
   }
 
   Ok(())
@@ -156,6 +123,36 @@ fn update_menu_items(
 pub fn hide_menu(app_handle: &AppHandle) -> anyhow::Result<()> {
   if let Some(existing_window) = app_handle.get_webview_window("macos") {
     existing_window.hide()?;
+    existing_window.eval(format!("window.updateMenuItems({:?});", Vec::<serde_json::Value>::new()))?;
+  }
+
+  Ok(())
+}
+
+fn resize_menu(
+  app_handle: &AppHandle,
+  index: usize,
+  button_x: i32,
+  monitor_y: i32,
+  width: u32,
+  height: u32
+) -> anyhow::Result<()> {
+  if let Some(existing_window) = app_handle.get_webview_window("macos") {
+    // do not show in taskbar
+    unsafe {
+      if let Ok(app_hwnd) = existing_window.hwnd() {
+        SetWindowLongPtrW(HWND(app_hwnd.0), GWL_EXSTYLE, WS_EX_TOOLWINDOW.0 as isize);
+      }
+    }
+
+    let adjusted_left = button_x + if index == 0 { 12 } else { index as i32 * 10 };
+    let _ = existing_window.set_position(tauri::PhysicalPosition::new(adjusted_left, monitor_y + 35));
+
+    existing_window
+      .set_size(tauri::Size::Physical(tauri::PhysicalSize { width, height }))
+      .map_err(|e| anyhow::anyhow!("Failed to resize window: {}", e))?;
+
+    existing_window.show()?;
   }
 
   Ok(())

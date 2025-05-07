@@ -58,7 +58,7 @@ async fn main() -> anyhow::Result<()> {
     .setup(|app| {
       // Initialize the menu window
       let app_handle = app.handle();
-      if let Err(err) = initialize_menu_window(&app_handle, 0, 0, 300, 400) {
+      if let Err(err) = initialize_menu_window(&app_handle) {
           eprintln!("Failed to initialize menu: {}", err);
       }
 

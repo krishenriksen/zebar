@@ -1,41 +1,3 @@
-import { createSignal, onCleanup } from 'solid-js';
-import { shellExec } from 'zebar';
-
-/**
- * Fetches the number of updates available on the system.
- */
-async function getUpdates(): Promise<number> {
-  try {
-    return await shellExec('powershell', [
-      '-Command',
-      '(New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher().Search("IsInstalled=0").Updates.Count',
-    ]);
-  } catch (err) {
-    console.error('Failed to fetch updates:', err);
-    return 0;
-  }
-}
-
-// Signal to store the number of updates
-const [updates, setUpdates] = createSignal<number>(0);
-
-// Initialize updates fetching logic
-function initializeUpdates() {
-  // Fetch updates initially
-  getUpdates().then(setUpdates);
-
-  // Set up periodic updates fetching
-  const interval = setInterval(() => {
-    getUpdates().then(setUpdates);
-  }, 2 * 60 * 60 * 1000); // 2 hours in milliseconds
-
-  // Clean up the interval when no longer needed
-  onCleanup(() => clearInterval(interval));
-}
-
-// Call the initialization function
-initializeUpdates();
-
 const menuItems = [
   {
     name: '',
@@ -46,7 +8,7 @@ const menuItems = [
         name: 'System Preferences...',
         action: 'start ms-settings:system',
         icon: 'updates',
-        key: `${updates() || 0} updates`,
+        key: '0 updates',
       },
       { name: 'App Store', action: 'start ms-windows-store:' },
       { name: 'spacer', action: '' },

@@ -160,14 +160,14 @@ function showMenu(
   index: number,
   subItems: { name: string; action: string, hwnd: number }[],
   buttonX: number,
-  monitorY: number,
+  monitorY: number
 ): Promise<void> {
   return invoke<void>('show_menu', {
     name,
     index,
     subItems,
     buttonX,
-    monitorY,
+    monitorY
   });
 }
 
