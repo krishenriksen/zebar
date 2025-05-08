@@ -56,11 +56,38 @@ function App() {
   const [activeMenuName, setActiveMenuName] = createSignal<string | null>(
     null,
   );
-  const [appSpecificOptions, setAppSpecificOptions] = createSignal<
-    DropdownOption[]
-  >([]);
+  const windowsModule = Applications['Windows'];
+  const fileExplorerModule = Applications['FileExplorer'];
+  const [appSpecificOptions, setAppSpecificOptions] = createSignal<DropdownOption[]>(
+    [
+      ...(windowsModule
+        ? windowsModule.menuItems.map((menuGroup: any) => ({
+            name: menuGroup.name,
+            items: menuGroup.items.map((item: any) => ({
+              name: item.name,
+              action: item.action,
+              hwnd: 0,
+              icon: item.icon || null,
+              key: item.key || null,
+            })),
+          }))
+        : []),
+      ...(fileExplorerModule
+        ? fileExplorerModule.menuItems.map((menuGroup: any) => ({
+            name: menuGroup.name,
+            items: menuGroup.items.map((item: any) => ({
+              name: item.name,
+              action: item.action,
+              hwnd: 0,
+              icon: item.icon || null,
+              key: item.key || null,
+            })),
+          }))
+        : []),
+    ],
+  );
   const defaultTitle = 'File Explorer';
-  const replaceTitle = ['Zebar - macos/macos', 'Program Manager'];
+  const replaceTitle = ['Program Manager'];
 
   createEffect(async () => {
     let title = replaceTitle.includes(output.window?.title)
