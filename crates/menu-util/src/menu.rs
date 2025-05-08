@@ -66,13 +66,11 @@ pub fn show_menu(
 
   hide_menu(app_handle)?;
 
-  update_menu_items(
-    app_handle,
-    sub_items
-  )?;  
+  update_menu_items(app_handle, sub_items.clone())?;
 
   // Calculate the width dynamically based on the longest menu item and key
   let font_size = 14.0;
+
   let max_text_width = filtered_items
       .iter()
       .map(|(item_name, _, _, _, key)| {
@@ -81,11 +79,20 @@ pub fn show_menu(
           text_width + key_width
       })
       .fold(0.0, f64::max); // Get the maximum width
-  let width = (max_text_width.ceil() as u32) + 80;
+  let width = (max_text_width.ceil() as u32) + 90;
 
-  // Calculate the height dynamically based on the number of sub-items
-  let item_height = 40; // Approximate height of each menu item in pixels
-  let height = (filtered_items.len() as f64 * item_height as f64).ceil() as u32;
+  // The height of the menu is calculated based on the number of items and their line height
+  let line_height = font_size * 1.5;
+  let padding_per_item = 15.0;
+  let item_height = line_height + padding_per_item;
+  let spacer_height = 5.0;
+  let total_item_height = filtered_items.len() as f64 * item_height;
+  let spacer_count = sub_items
+    .iter()
+    .filter(|(item_name, _, _, _, _)| item_name == "spacer")
+    .count();
+  let total_spacer_height = spacer_count as f64 * spacer_height;
+  let height = (total_item_height + total_spacer_height).ceil() as u32;
 
   resize_menu(app_handle, index, button_x, monitor_y, width, height)?;
 
