@@ -6241,7 +6241,7 @@ name = "window-util"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "lazy_static",
+ "once_cell",
  "serde",
  "tauri",
  "thiserror 2.0.12",

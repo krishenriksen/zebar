@@ -1,6 +1,10 @@
-use std::thread;
-use lazy_static::lazy_static;
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use tokio::{
+    task,
+    time::{sleep, Duration},
+    sync::mpsc::{self, UnboundedReceiver, UnboundedSender},
+};
+use std::sync::{Mutex};
+use once_cell::sync::OnceCell;
 use windows::Win32::{
     Foundation::{
         HWND,
@@ -9,13 +13,11 @@ use windows::Win32::{
     UI::{
         Accessibility::{SetWinEventHook, UnhookWinEvent},
         WindowsAndMessaging::{
-            DispatchMessageW, GetMessageW, GetWindowTextLengthW, GetWindowTextW, SetForegroundWindow,
+            DispatchMessageW, PeekMessageW, PM_REMOVE, GetWindowTextLengthW, GetWindowTextW, SetForegroundWindow,
             TranslateMessage, EVENT_SYSTEM_FOREGROUND, MSG,
         },
     },
 };
-
-use std::sync::{Mutex};
 
 /// Represents a foreground window event.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -31,23 +33,21 @@ pub struct Window {
     event_tx: UnboundedSender<WindowEvent>,
 }
 
-lazy_static! {
-    static ref EVENT_TX: Mutex<Option<UnboundedSender<WindowEvent>>> = Mutex::new(None);
-}
+// Define EVENT_TX globally using OnceCell
+static EVENT_TX: OnceCell<Mutex<Option<UnboundedSender<WindowEvent>>>> = OnceCell::new();
 
 impl Window {
-    /// Creates a new `Window` instance.
     pub fn new() -> crate::Result<Self> {
         let (event_tx, event_rx) = mpsc::unbounded_channel();
 
-        // Store the sender in the static `EVENT_TX`
-        *EVENT_TX.lock().unwrap() = Some(event_tx.clone());
+        // Initialize the static EVENT_TX if not already initialized.
+        EVENT_TX.get_or_init(|| Mutex::new(None));
+        *EVENT_TX.get().unwrap().lock().unwrap() = Some(event_tx.clone());
 
         Self::start_window_event_listener();
 
         Ok(Window { event_rx, event_tx })
     }
-
     /// Returns the next event from the `Window`.
     pub async fn events(&mut self) -> Option<WindowEvent> {
         while let Some(event) = self.event_rx.recv().await {
@@ -78,31 +78,29 @@ impl Window {
     }
 
     fn start_window_event_listener() {
-        thread::spawn(move || unsafe {
-            let hook_foreground = SetWinEventHook(
-                EVENT_SYSTEM_FOREGROUND,
-                EVENT_SYSTEM_FOREGROUND,
-                GetModuleHandleW(None).unwrap(),
-                Some(event_callback),
-                0,
-                0,
-                0,
-            );
+        task::spawn_blocking(move || {
+            if let Some(_hook) = WinEventHook::new() {
+                println!("Listening for window events...");
 
-            if hook_foreground.0.is_null() {
-                eprintln!("Failed to set foreground event hook");
-                return;
+                let mut msg = MSG::default();
+                loop {
+                    let has_message = unsafe {
+                        PeekMessageW(&mut msg, HWND(std::ptr::null_mut()), 0, 0, PM_REMOVE).into()
+                    };
+
+                    if has_message {
+                        unsafe {
+                            let _ = TranslateMessage(&msg);
+                            DispatchMessageW(&msg);
+                        }
+                    } else {
+                        tokio::runtime::Handle::current().block_on(sleep(Duration::from_millis(10)));
+                    }
+                }
+
+                // The `hook` variable remains in scope until the thread exits,
+                // ensuring the `Drop` implementation is called.
             }
-
-            println!("Listening for window events...");
-
-            let mut msg = MSG::default();
-            while GetMessageW(&mut msg, HWND(std::ptr::null_mut()), 0, 0).into() {
-                let _ = TranslateMessage(&msg);
-                DispatchMessageW(&msg);
-            }
-
-            let _ = UnhookWinEvent(hook_foreground);
         });
     }
 
@@ -114,6 +112,50 @@ impl Window {
             } else {
                 Err("Failed to set foreground window".to_string())
             }
+        }
+    }
+}
+
+impl Drop for Window {
+    fn drop(&mut self) {
+        if let Some(mutex) = EVENT_TX.get() {
+            *mutex.lock().unwrap() = None;
+        }
+    }
+}
+
+// Struct to manage the lifetime of the event hook
+struct WinEventHook {
+    hook: windows::Win32::UI::Accessibility::HWINEVENTHOOK,
+}
+
+impl WinEventHook {
+    fn new() -> Option<Self> {
+        let hook = unsafe {
+            SetWinEventHook(
+                EVENT_SYSTEM_FOREGROUND,
+                EVENT_SYSTEM_FOREGROUND,
+                GetModuleHandleW(None).unwrap(),
+                Some(event_callback),
+                0,
+                0,
+                0,
+            )
+        };
+
+        if hook.0.is_null() {
+            eprintln!("Failed to set foreground event hook");
+            None
+        } else {
+            Some(Self { hook })
+        }
+    }
+}
+
+impl Drop for WinEventHook {
+    fn drop(&mut self) {
+        unsafe {
+            let _ = UnhookWinEvent(self.hook);
         }
     }
 }
@@ -143,12 +185,14 @@ unsafe extern "system" fn event_callback(
         }
 
         // Access the static `EVENT_TX` to send the event
-        if let Some(sender) = EVENT_TX.lock().unwrap().as_ref() {
-            if let Err(err) = sender.send(WindowEvent {
-                hwnd: hwnd.0 as isize,
-                title: window_title,
-            }) {
-                eprintln!("Failed to send event: {}", err);
+        if let Some(mutex) = EVENT_TX.get() {
+            if let Some(sender) = mutex.lock().unwrap().as_ref() {
+                if let Err(err) = sender.send(WindowEvent {
+                    hwnd: hwnd.0 as isize,
+                    title: window_title,
+                }) {
+                    eprintln!("Failed to send event: {}", err);
+                }
             }
         }
     }

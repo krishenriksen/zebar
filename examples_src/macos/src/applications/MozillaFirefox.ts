@@ -1,6 +1,4 @@
-const applicationTitles = [
-  'Mozilla Firefox',
-];
+const applicationTitles = ['Mozilla Firefox'];
 
 const menuItems = [
   {

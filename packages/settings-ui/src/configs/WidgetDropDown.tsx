@@ -41,11 +41,11 @@ export function WidgetDropDown() {
   };
 
   const handleAction = async (action: string, hwnd?: number) => {
-    setForegroundWindow(hwnd);
-    await shellExec('powershell', ['-Command', action]);
     if (hwnd) {
       hideMenu(hwnd);
+      setForegroundWindow(hwnd);
     }
+    await shellExec('powershell', ['-Command', action]);
   };
 
   return (

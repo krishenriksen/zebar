@@ -35,12 +35,22 @@ function App() {
   /**
    * Get menu entries for specific applications
    */
+  type MenuItem = {
+    name: string;
+    action: string;
+    hwnd: number;
+    icon?: string | null;
+    key?: string | null;
+  };
+  
+  type MenuGroup = {
+    name: string;
+    items: MenuItem[];
+  };
+
   type DropdownOption = {
     name: string;
-    action?: string;
-    hwnd?: number;
-    icon?: string | null; // Add this line to include the 'icon' property
-    key?: string | null;
+    items?: MenuItem[];
   };
 
   type ModuleType = {
@@ -61,9 +71,9 @@ function App() {
   const [appSpecificOptions, setAppSpecificOptions] = createSignal<DropdownOption[]>(
     [
       ...(windowsModule
-        ? windowsModule.menuItems.map((menuGroup: any) => ({
+        ? windowsModule.menuItems.map((menuGroup: MenuGroup) => ({
             name: menuGroup.name,
-            items: menuGroup.items.map((item: any) => ({
+            items: menuGroup.items.map((item: MenuItem) => ({
               name: item.name,
               action: item.action,
               hwnd: 0,
@@ -73,9 +83,9 @@ function App() {
           }))
         : []),
       ...(fileExplorerModule
-        ? fileExplorerModule.menuItems.map((menuGroup: any) => ({
+        ? fileExplorerModule.menuItems.map((menuGroup: MenuGroup) => ({
             name: menuGroup.name,
-            items: menuGroup.items.map((item: any) => ({
+            items: menuGroup.items.map((item: MenuItem) => ({
               name: item.name,
               action: item.action,
               hwnd: 0,
@@ -113,37 +123,18 @@ function App() {
 
       let options: DropdownOption[] = [];
 
-      // Always add the Windows module to options
-      const windowsModule = Applications['Windows'];
-      if (windowsModule) {
-        windowsModule.menuItems.forEach((menuItem: any) => {
-          options.push({
-            name: menuItem.name,
-            items: menuItem.items.map((item: any) => ({
-              name: item.name,
-              action: item.action,
-              hwnd: hwnd,
-              icon: item.icon || null,
-              key: item.key || null,         
-            })),
-          });
-        });
-      }
-
       // Check if the module exists in Applications
       const module: ModuleType | undefined = Object.values(
-        Applications,
-      ).find(
-        mod =>
-          mod.applicationTitles && mod.applicationTitles.includes(title),
+        Applications
+      ).find(mod => 
+        mod.applicationTitles && mod.applicationTitles.includes(title)
       );
 
       if (module) {
-        // Add sections with sub-items
-        module.menuItems.forEach(section => {
+        module.menuItems.forEach((section: MenuGroup) => {
           options.push({
             name: section.name,
-            items: section.items.map(item => ({
+            items: section.items.map((item: MenuItem) => ({
               name: item.name,
               action: item.action,
               hwnd: hwnd,
@@ -159,7 +150,11 @@ function App() {
         });
       }
 
-      setAppSpecificOptions(options);
+      // Update appSpecificOptions while preserving the Windows module at index 0
+      setAppSpecificOptions(prevOptions => {
+        const firstOption = prevOptions[0];
+        return [firstOption, ...options];
+      });
     }
   });
 
@@ -167,7 +162,7 @@ function App() {
     e: MouseEvent,
     name: string | (() => string),
     index: number,
-    items: DropdownOption[],
+    items: MenuItem[],
   ) => {
     const target = e.currentTarget as HTMLButtonElement;
     const rect = target.getBoundingClientRect();

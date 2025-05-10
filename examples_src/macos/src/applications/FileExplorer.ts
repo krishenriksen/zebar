@@ -10,9 +10,9 @@ const menuItems = [
       { name: 'spacer', action: '' },
       { name: 'Empty Bin', action: 'Clear-RecycleBin -Force' },
       { name: 'spacer', action: '' },
-      { name: 'Hide File Explorer', action: 'start ms-settings:' },
-      { name: 'Hide Others', action: 'start ms-settings:' },
-      { name: 'Show All', action: 'start ms-settings:' },
+      { name: 'Hide File Explorer', action: '' },
+      { name: 'Hide Others', action: '' },
+      { name: 'Show All', action: '' },
     ],
   },
   {

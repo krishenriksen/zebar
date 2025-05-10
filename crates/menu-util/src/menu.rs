@@ -37,9 +37,9 @@ pub fn initialize_menu_window(app_handle: &AppHandle) -> anyhow::Result<()> {
         eprintln!("Failed to create window: {}", err);
       }
     });
-  }
 
-  hide_menu(app_handle)?;
+    hide_menu(app_handle)?;
+  }
 
   Ok(())
 }
@@ -81,10 +81,7 @@ pub fn show_menu(
       .fold(0.0, f64::max); // Get the maximum width
   let width = (max_text_width.ceil() as u32) + 90;
 
-  // The height of the menu is calculated based on the number of items and their line height
-  let line_height = font_size * 1.5;
-  let padding_per_item = 15.0;
-  let item_height = line_height + padding_per_item;
+  let item_height = 29.0;
   let spacer_height = 5.0;
   let total_item_height = filtered_items.len() as f64 * item_height;
   let spacer_count = sub_items
@@ -92,7 +89,13 @@ pub fn show_menu(
     .filter(|(item_name, _, _, _, _)| item_name == "spacer")
     .count();
   let total_spacer_height = spacer_count as f64 * spacer_height;
-  let height = (total_item_height + total_spacer_height).ceil() as u32;
+
+  let monitor_scale_factor = app_handle
+    .get_webview_window("macos")
+    .and_then(|window| window.scale_factor().ok())
+    .unwrap_or(1.0);
+
+  let height = ((total_item_height + total_spacer_height) * monitor_scale_factor).ceil() as u32;
 
   resize_menu(app_handle, index, button_x, monitor_y, width, height)?;
 
@@ -119,7 +122,10 @@ fn update_menu_items(
             })
             .collect::<Vec<_>>(),
     )
-    .unwrap_or_else(|_| "[]".to_string());
+    .unwrap_or_else(|err| {
+        eprintln!("Failed to serialize menu items: {}", err);
+        "[]".to_string()
+    });
 
     existing_window.eval(format!("window.updateMenuItems({});", items_json))?;
   }
@@ -128,12 +134,15 @@ fn update_menu_items(
 }
 
 pub fn hide_menu(app_handle: &AppHandle) -> anyhow::Result<()> {
-  if let Some(existing_window) = app_handle.get_webview_window("macos") {
-    existing_window.hide()?;
-    existing_window.eval(format!("window.updateMenuItems({:?});", Vec::<serde_json::Value>::new()))?;
-  }
+    if let Some(existing_window) = app_handle.get_webview_window("macos") {
+        existing_window.hide()?;
+        existing_window.eval(format!(
+            "window.updateMenuItems({:?});",
+            Vec::<serde_json::Value>::new()
+        ))?;
+    }
 
-  Ok(())
+    Ok(())
 }
 
 fn resize_menu(
@@ -146,10 +155,12 @@ fn resize_menu(
 ) -> anyhow::Result<()> {
   if let Some(existing_window) = app_handle.get_webview_window("macos") {
     // do not show in taskbar
-    unsafe {
-      if let Ok(app_hwnd) = existing_window.hwnd() {
-        SetWindowLongPtrW(HWND(app_hwnd.0), GWL_EXSTYLE, WS_EX_TOOLWINDOW.0 as isize);
-      }
+    if let Ok(app_hwnd) = existing_window.hwnd() {
+        unsafe {
+            SetWindowLongPtrW(HWND(app_hwnd.0), GWL_EXSTYLE, WS_EX_TOOLWINDOW.0 as isize);
+        }
+    } else {
+        eprintln!("Failed to retrieve HWND for the menu window.");
     }
 
     let adjusted_left = button_x + if index == 0 { 12 } else { index as i32 * 10 };
