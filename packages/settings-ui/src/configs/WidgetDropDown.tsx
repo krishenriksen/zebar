@@ -1,4 +1,5 @@
-import { createSignal } from 'solid-js';
+import { createSignal, onCleanup } from 'solid-js';
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
 import { setForegroundWindow, shellExec, hideMenu } from 'zebar';
 
 type DropDownItem = {
@@ -7,13 +8,8 @@ type DropDownItem = {
   hwnd?: number;
   icon?: string;
   key?: string;
+  disabled?: boolean;
 };
-
-declare global {
-  interface Window {
-    updateMenuItems: (newItems: DropDownItem[]) => void;
-  }
-}
 
 export function WidgetDropDown() {
   const [items, setItems] = createSignal<DropDownItem[]>([]);
@@ -31,14 +27,21 @@ export function WidgetDropDown() {
     }
   };
 
-  window.updateMenuItems = (newItems: DropDownItem[]) => {
-    setItems(newItems);
+  // Listen for updates to the menu items
+  const unlisten: Promise<UnlistenFn> = listen<DropDownItem[]>('updateMenuItems', (event) => {
+    setItems(event.payload);
+
     /*
     getUpdates().then(count => {
       setUpdates(count);
     });
     */
-  };
+  });
+
+  // Cleanup listener on component unmount
+  onCleanup(async () => {
+    (await unlisten)();
+  });
 
   const handleAction = async (action: string, hwnd?: number) => {
     if (hwnd) {
@@ -54,7 +57,7 @@ export function WidgetDropDown() {
         item.name === 'spacer' ? (
           <li class="spacer"></li>
         ) : (
-          <li>
+          <li class={`${item.disabled ? 'disabled' : ''}`}>
             <button
               onClick={() => handleAction(item.action, item.hwnd)}
             >

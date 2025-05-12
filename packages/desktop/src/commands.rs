@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use serde_json::Value;
 
-use menu_util::{hide_menu as hideMenu, show_menu as showMenu};
 use tauri::{AppHandle, State, Window};
 #[cfg(target_os = "windows")]
 use window_util::Window as UtilWindow;
@@ -214,7 +214,7 @@ pub fn set_foreground_window(hwnd: isize) -> Result<String, String> {
 pub fn show_menu(
   name: String,
   index: usize,
-  sub_items: Vec<(String, String, isize, Option<String>, Option<String>)>,
+  sub_items: Vec<HashMap<String, Value>>,
   button_x: i32,
   monitor_y: i32,
   config: State<'_, Arc<Config>>,
@@ -223,7 +223,7 @@ pub fn show_menu(
 
   #[cfg(target_os = "windows")]
   {
-    match showMenu(
+    match menu_util::show_menu(
       app_handle, name, index, sub_items, button_x, monitor_y,
     ) {
       Ok(_) => Ok(format!("Successfully shown menu")),
@@ -233,7 +233,6 @@ pub fn show_menu(
 
   #[cfg(not(target_os = "windows"))]
   {
-    // Provide a fallback or error message for other platforms
     Err("Menu functionality is only available on Windows.".to_string())
   }
 }
@@ -244,7 +243,7 @@ pub fn hide_menu(config: State<'_, Arc<Config>>) -> Result<String, String> {
 
   #[cfg(target_os = "windows")]
   {
-    match hideMenu(app_handle) {
+    match menu_util::hide_menu(app_handle) {
       Ok(_) => Ok(format!("Successfully shown menu")),
       Err(err) => Err(format!("Failed to show menu: {}", err)),
     }

@@ -12,6 +12,7 @@
     "@solidjs/router": "0.15.3",
     "@tabler/icons-solidjs": "3.31.0",
     "@tauri-apps/api": "2.5.0",
+    "@tauri-apps/cli": "2.5.0",
     "smorf": "1.5.1",
     "solid-js": "1.9.5"
   },

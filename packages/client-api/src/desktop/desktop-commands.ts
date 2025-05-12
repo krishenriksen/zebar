@@ -158,7 +158,14 @@ function setForegroundWindow(hwnd: number): Promise<void> {
 function showMenu(
   name: string,
   index: number,
-  subItems: { name: string; action: string, hwnd: number }[],
+  subItems: {
+    name: string;
+    action: string;
+    hwnd: number;
+    icon?: string | null;
+    key?: string | null;
+    disabled?: boolean;
+  }[],
   buttonX: number,
   monitorY: number
 ): Promise<void> {
@@ -167,7 +174,7 @@ function showMenu(
     index,
     subItems,
     buttonX,
-    monitorY
+    monitorY,
   });
 }
 

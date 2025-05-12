@@ -9,7 +9,9 @@
     "lint": "cargo fmt --check",
     "tauri": "tauri"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@tauri-apps/api": "2.5.0"
+  },
   "devDependencies": {
     "@tauri-apps/cli": "2.5.0",
     "typescript": "5.8.3"

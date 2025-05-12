@@ -2,7 +2,7 @@
 import './index.css';
 import { render } from 'solid-js/web';
 import { createStore } from 'solid-js/store';
-import { createSignal, createEffect, createMemo, JSX } from 'solid-js';
+import { createSignal, createEffect, createMemo } from 'solid-js';
 import { createProviderGroup, shellExec, showMenu, hideMenu } from 'zebar';
 import { currentMonitor } from '@tauri-apps/api/window';
 
@@ -41,6 +41,7 @@ function App() {
     hwnd: number;
     icon?: string | null;
     key?: string | null;
+    disabled?: boolean;
   };
   
   type MenuGroup = {
@@ -54,12 +55,18 @@ function App() {
   };
 
   type ModuleType = {
-    titles: string[];
+    applicationTitles: string[];
     menuItems: {
       name: string;
-      items: { name: string; action: string, hwnd: number }[];
+      items: {
+        name: string;
+        action: string;
+        hwnd: number;
+        icon?: string | null;
+        key?: string | null;
+        disabled?: boolean;
+      }[];
     }[];
-    applicationTitles: string[];
   };
 
   const [isMenuVisible, setMenuVisible] = createSignal(false);
@@ -79,6 +86,7 @@ function App() {
               hwnd: 0,
               icon: item.icon || null,
               key: item.key || null,
+              disabled: item.disabled || false,
             })),
           }))
         : []),
@@ -91,6 +99,7 @@ function App() {
               hwnd: 0,
               icon: item.icon || null,
               key: item.key || null,
+              disabled: item.disabled || false,
             })),
           }))
         : []),
@@ -139,7 +148,8 @@ function App() {
               action: item.action,
               hwnd: hwnd,
               icon: item.icon || null,
-              key: item.key || null,          
+              key: item.key || null,
+              disabled: item.disabled || false,
             })),
           });
         });
@@ -171,21 +181,12 @@ function App() {
     const adjustedLeft = monitor?.x + rect.left;
     const button_x = Math.round(adjustedLeft);
 
-    // Map items to tuples
-    const subItems = items.map(item => [
-      item.name,
-      item.action || '',
-      item.hwnd || 0,
-      item.icon || null,
-      item.key || null,
-    ]);
-
     showMenu(
       name,
       index,
-      subItems,
+      items,
       button_x,
-      monitor?.y > 0 ? monitor?.y + 14 : monitor?.y || 0,
+      monitor?.y > 0 ? monitor?.y + 10 : monitor?.y || 0,
     );
   };
 
@@ -222,7 +223,12 @@ function App() {
     tooltip: string;
   };
 
-  const iconCache = new Map<string, JSX.Element>();
+  interface IconCacheValue {
+    element: HTMLLIElement;
+    processed: boolean;
+  }
+
+  const iconCache: Map<string, IconCacheValue> = new Map();
 
   const SystrayIcons = createMemo(() => {
     if (output.systray) {
@@ -245,7 +251,8 @@ function App() {
           const getPriority = (icon: SystrayIcon) => {
             const tooltip = icon.tooltip?.toLowerCase() || '';
             if (tooltip.includes('cpu core')) return 1;
-            if (tooltip.includes('gpu')) return 2;
+            if (tooltip.includes('gpu - nvidia geforce rtx 5080')) return 2;
+            if (tooltip.includes('gpu - nvidia geforce rtx 3060')) return 3;
             return 99; // everything else gets a lower priority
           };
 
@@ -253,12 +260,13 @@ function App() {
         })
         .map((icon: SystrayIcon) => {
           if (iconCache.has(icon.id)) {
-            const cachedIcon = iconCache.get(icon.id) as HTMLLIElement;
+            const cachedIcon = iconCache.get(icon.id);
             if (cachedIcon) {
-              const img = cachedIcon.querySelector('img');
+              const img = cachedIcon.element.querySelector('img');
               if (img) {
-                img.src = icon.iconUrl;
-                img.title = icon.tooltip;
+                if (!cachedIcon.processed) {
+                  img.src = icon.iconUrl;
+                }
               }
             }
           } else {
@@ -275,14 +283,87 @@ function App() {
                   output.systray?.onRightClick(icon.id);
                 }}
               >
-                <img src={icon.iconUrl} title={icon.tooltip} />
+                <img
+                  src={icon.iconUrl}
+                  title={icon.tooltip}
+                  onLoad={e => {
+                    const img = e.currentTarget as HTMLImageElement;
+
+                    // Check if the icon has already been processed
+                    const cachedIcon = iconCache.get(icon.id);
+                    if (cachedIcon?.processed) {
+                      return;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    if (ctx) {
+                      canvas.width = img.width;
+                      canvas.height = img.height;
+                      ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                      // Get the top-left 10x10 pixel area
+                      const imageData = ctx.getImageData(0, 0, 10, 10);
+                      const pixels = imageData.data;
+
+                      let isWhite = true;
+
+                      // Check each pixel in the 10x10 area
+                      for (let i = 0; i < pixels.length; i += 4) {
+                        const [r, g, b, a] = [
+                          pixels[i],     // Red
+                          pixels[i + 1], // Green
+                          pixels[i + 2], // Blue
+                          pixels[i + 3], // Alpha
+                        ];
+
+                        // If any pixel is not white, set isWhite to false and break
+                        if (a > 0 && (r <= 240 || g <= 240 || b <= 240)) {
+                          isWhite = false;
+                          break;
+                        }
+                      }
+
+                      // If the entire 10x10 area is white, replace all white pixels in the image with black
+                      if (isWhite) {
+                        const fullImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const fullPixels = fullImageData.data;
+
+                        for (let i = 0; i < fullPixels.length; i += 4) {
+                          const [r, g, b, a] = [
+                            fullPixels[i],     // Red
+                            fullPixels[i + 1], // Green
+                            fullPixels[i + 2], // Blue
+                            fullPixels[i + 3], // Alpha
+                          ];
+
+                          // If the pixel is white, make it black
+                          if (a > 0 && r > 240 && g > 240 && b > 240) {
+                            fullPixels[i] = 0;     // Red
+                            fullPixels[i + 1] = 0; // Green
+                            fullPixels[i + 2] = 0; // Blue
+                          }
+                        }
+
+                        // Put the modified image data back on the canvas
+                        ctx.putImageData(fullImageData, 0, 0);
+
+                        // Update the image source with the modified canvas
+                        img.src = canvas.toDataURL();
+
+                        // Mark the icon as processed in the cache only if it is white
+                        iconCache.set(icon.id, { element: li as HTMLLIElement, processed: true });
+                      }
+                    }
+                  }}
+                />
               </li>
             );
 
-            iconCache.set(icon.id, li);
+            iconCache.set(icon.id, { element: li as HTMLLIElement, processed: false });
           }
 
-          return iconCache.get(icon.id);
+          return iconCache.get(icon.id)?.element;
         });
     }
 

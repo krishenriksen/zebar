@@ -12,7 +12,7 @@ const menuItems = [
       { name: 'spacer', action: '' },
       { name: 'Hide File Explorer', action: '' },
       { name: 'Hide Others', action: '' },
-      { name: 'Show All', action: '' },
+      { name: 'Show All', action: '', disabled: true },
     ],
   },
   {

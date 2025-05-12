@@ -40,4 +40,5 @@ windows = { version = "0.58", features = [
 ] }
 
 [profile.release]
-lto = true
+lto = "fat"
+panic = "abort"

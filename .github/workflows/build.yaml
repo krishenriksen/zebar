@@ -63,6 +63,12 @@ jobs:
           projectPath: packages/desktop
           args: --target ${{ matrix.tauri-target }}
 
+      - name: Analyze Binary Size with Cargo Bloat
+        shell: bash
+        run: |
+          cargo install cargo-bloat
+          cargo bloat --release --crates > bloat-report.txt
+
       - name: Move & rename artifacts
         shell: bash
         run: |
