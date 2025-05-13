@@ -266,6 +266,7 @@ function App() {
               if (img) {
                 if (!cachedIcon.processed) {
                   img.src = icon.iconUrl;
+                  img.title = icon.tooltip;
                 }
               }
             }
