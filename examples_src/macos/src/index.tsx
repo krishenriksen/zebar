@@ -194,6 +194,40 @@ function App() {
    * set volume
    */
   const [isVolumeVisible, setVolumeVisible] = createSignal(false);
+  const [isVolumeHovered, setVolumeHovered] = createSignal(false);
+  let volumeInteval: number | undefined;
+
+  const handleVolumeEnter = () => {
+    setVolumeVisible(true);
+    setVolumeHovered(true);
+    if (volumeInteval) {
+      clearTimeout(volumeInteval);
+      volumeInteval = undefined;
+    }
+  };
+
+  const handleVolumeMove = (e: any) => {
+    // Called on mouse move, ensuring the slider stays visible while moving.
+    setVolumeVisible(true);
+    if (volumeInteval) {
+      clearTimeout(volumeInteval);
+      volumeInteval = undefined;
+    }
+    if (!isVolumeHovered()) {
+      volumeInteval = setTimeout(() => {
+        if (!isVolumeHovered()) setVolumeVisible(false);
+      }, 1000);
+    }
+  };  
+
+  const handleVolumeLeave = () => {
+    setVolumeHovered(false);
+    volumeInteval = setTimeout(() => {
+      if (!isVolumeHovered()) {
+        setVolumeVisible(false);
+      }
+    }, 1000);
+  };
 
   /**
    * Renders the icons in the system tray.
@@ -392,6 +426,7 @@ function App() {
           {output.audio?.defaultPlaybackDevice && (
             <li>
               <button
+                title={`Volume: ${output.audio.defaultPlaybackDevice.volume}`}
                 class={`volume nf ${
                   output.audio.defaultPlaybackDevice.volume === 0
                     ? 'nf-fa-volume_xmark'
@@ -401,9 +436,12 @@ function App() {
                         ? 'nf-fa-volume_low'
                         : 'nf-fa-volume_high'
                 }`}
-                onClick={() => setVolumeVisible(!isVolumeVisible())}
+                onMouseEnter={handleVolumeEnter}
+                onMouseMove={handleVolumeMove}
+                onMouseLeave={handleVolumeLeave}
               ></button>
               <input
+                title={`Volume: ${output.audio.defaultPlaybackDevice.volume}`}
                 class={`${isVolumeVisible() ? 'active' : ''}`}
                 type="range"
                 min="0"
@@ -413,6 +451,9 @@ function App() {
                 onInput={e =>
                   output.audio?.setVolume(e.target.valueAsNumber)
                 }
+                onMouseEnter={handleVolumeEnter}
+                onMouseMove={handleVolumeMove}
+                onMouseLeave={handleVolumeLeave}
               />              
             </li>
           )}
