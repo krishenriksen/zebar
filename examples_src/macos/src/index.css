@@ -1,8 +1,25 @@
-/**
- * Import the Nerdfonts icon font.
- * Ref https://www.nerdfonts.com/cheat-sheet for a cheatsheet of available Nerdfonts icons.
- */
-@import 'https://www.nerdfonts.com/assets/css/webfont.css';
+@font-face{
+  font-family:'NerdFontsSymbols Nerd Font';
+  src:url("./assets/Symbols-2048-em Nerd Font Complete.woff2") format("woff2");
+  font-weight:normal;
+  font-style:normal
+}
+
+.nf {
+  font-family:'NerdFontsSymbols Nerd Font';
+  font-style:normal;
+  font-weight:normal;
+  font-variant:normal;
+  text-transform:none;
+  line-height:1;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+.nf-fa-windows:before{content:"\f17a"}
+.nf-fa-volume_xmark:before{content:"\eee8"}
+.nf-fa-volume_low:before{content:"\f027"}
+.nf-fa-volume_high:before{content:"\f028"}
 
 html,
 body {
@@ -92,8 +109,9 @@ input,
   text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25);
 }
 
-.date:focus,
-.systray-icon:hover {
+.volume:hover,
+.systray-icon:hover,
+.date:focus {
   background-color: #d6d6d6;
   border-radius: 4px;
 }
@@ -109,19 +127,8 @@ input,
 }
 
 /* Styles for input range slider to mimic MacOS Monterey volume slider */
-button.volume-container {
-  display: flex;
-  align-items: center;
-}
-
-i.volume {
-  font-size: 19px;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-button.volume-container.active i.volume {
-  margin-right: 8px;
+button.volume {
+  font-size: 20px;
 }
 
 input[type='range'] {
@@ -135,7 +142,7 @@ input[type='range'] {
   display: none;
 }
 
-button.volume-container.active input[type='range'] {
+input[type='range'].active {
   flex-grow: 1;
   display: inline-block;
 }

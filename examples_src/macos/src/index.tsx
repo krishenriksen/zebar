@@ -194,25 +194,6 @@ function App() {
    * set volume
    */
   const [isVolumeVisible, setVolumeVisible] = createSignal(false);
-  let volumeInteval: number | undefined;
-
-  /**
-   * Handle volume slider visibility
-   * Toggles the volume slider visibility and sets a timeout to hide it after a delay
-   * @param {MouseEvent} e
-   * @returns {void}
-   */
-  const handleVolume = (e: any) => {
-    setVolumeVisible(true);
-
-    if (volumeInteval) {
-      clearTimeout(volumeInteval);
-    }
-
-    volumeInteval = setTimeout(() => {
-      setVolumeVisible(false);
-    }, 1000);
-  };
 
   /**
    * Renders the icons in the system tray.
@@ -411,31 +392,28 @@ function App() {
           {output.audio?.defaultPlaybackDevice && (
             <li>
               <button
-                class={`volume-container ${isVolumeVisible() ? 'active' : ''}`}
-                onMouseMove={handleVolume}
-              >
-                <i
-                  class={`volume nf ${
-                    output.audio.defaultPlaybackDevice.volume === 0
-                      ? 'nf-fa-volume_xmark'
-                      : output.audio.defaultPlaybackDevice.volume < 20
+                class={`volume nf ${
+                  output.audio.defaultPlaybackDevice.volume === 0
+                    ? 'nf-fa-volume_xmark'
+                    : output.audio.defaultPlaybackDevice.volume < 20
+                      ? 'nf-fa-volume_low'
+                      : output.audio.defaultPlaybackDevice.volume < 40
                         ? 'nf-fa-volume_low'
-                        : output.audio.defaultPlaybackDevice.volume < 40
-                          ? 'nf-fa-volume_low'
-                          : 'nf-fa-volume_high'
-                  }`}
-                ></i>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="2"
-                  value={output.audio.defaultPlaybackDevice.volume}
-                  onInput={e =>
-                    output.audio?.setVolume(e.target.valueAsNumber)
-                  }
-                />
-              </button>
+                        : 'nf-fa-volume_high'
+                }`}
+                onClick={() => setVolumeVisible(!isVolumeVisible())}
+              ></button>
+              <input
+                class={`${isVolumeVisible() ? 'active' : ''}`}
+                type="range"
+                min="0"
+                max="100"
+                step="2"
+                value={output.audio.defaultPlaybackDevice.volume}
+                onInput={e =>
+                  output.audio?.setVolume(e.target.valueAsNumber)
+                }
+              />              
             </li>
           )}
 
